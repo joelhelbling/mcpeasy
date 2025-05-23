@@ -15,7 +15,7 @@ bundle install
 
 The project requires:
 - A Slack bot token (stored in `.env` file as `SLACK_BOT_TOKEN`)
-- Ruby gems: `slack-ruby-client` and `dotenv`
+- Ruby gems: `slack-ruby-client`, `dotenv`, and `standard`
 
 ## Common Commands
 

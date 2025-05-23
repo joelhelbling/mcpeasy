@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "slack_poster": {
+      "type": "stdio",
+      "command": "ruby",
+      "args": [
+        "./slack_poster.rb",
+        "--mcp"
+      ],
+      "env": {}
+    }
+  }
+}

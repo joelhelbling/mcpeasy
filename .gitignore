@@ -1,3 +1,4 @@
 .ruby-lsp
 .env
 .claude/settings.local.json
+.mcp.local.json

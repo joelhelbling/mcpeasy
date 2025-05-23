@@ -34,6 +34,15 @@ Make script executable:
 chmod +x slack_poster.rb
 ```
 
+Run linting:
+```bash
+bundle exec standardrb
+```
+
+## Code Quality
+
+**IMPORTANT**: When editing Ruby source code, you MUST run `bundle exec standardrb` after making changes and fix any linting issues that are reported.
+
 ## Architecture
 
 The main component is the `SlackPoster` class which:

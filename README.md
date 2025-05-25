@@ -27,12 +27,30 @@ To get your Slack bot token:
 
 ### 3. Configure Environment Variables
 
-1. Copy `.env.template` to `.env`:
+1. Create a `.env` file with your API tokens:
    ```bash
-   cp .env.template .env
+   # .env
+   SLACK_BOT_TOKEN=xoxb-your-actual-slack-token
+   GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_your-actual-github-token
    ```
 
-2. Edit `.env` and replace `xoxb-your-bot-token-here` with your actual bot token
+2. **For MCP server usage with Claude Code**, set up `direnv` for automatic environment loading:
+
+   a. Install `direnv` if not already installed:
+   ```bash
+   # macOS
+   brew install direnv
+
+   # Add to your shell profile (~/.bashrc, ~/.zshrc, etc.)
+   eval "$(direnv hook bash)"  # or zsh, fish, etc.
+   ```
+
+   b. Allow `direnv` to work in this directory:
+   ```bash
+   direnv allow
+   ```
+
+   This ensures environment variables are available to Claude Code when it launches MCP servers.
 
 ### 4. Usage Examples
 

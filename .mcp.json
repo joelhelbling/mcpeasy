@@ -1,14 +1,5 @@
 {
   "mcpServers": {
-    "slack_poster": {
-      "type": "stdio",
-      "command": "ruby",
-      "args": [
-        "./slack_poster.rb",
-        "--mcp"
-      ],
-      "env": {}
-    },
     "context7": {
       "type": "stdio",
       "command": "npx",
@@ -31,6 +22,16 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
+    },
+    "slack": {
+      "type": "stdio",
+      "command": "bundle",
+      "args": [
+        "exec",
+        "ruby",
+        "./utilities/slack/mcp.rb"
+      ],
+      "env": {}
     }
   }
 }

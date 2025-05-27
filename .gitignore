@@ -2,3 +2,4 @@
 .env
 .claude/settings.local.json
 .mcp.local.json
+logs/*

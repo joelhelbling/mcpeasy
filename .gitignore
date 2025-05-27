@@ -3,3 +3,4 @@
 .claude/settings.local.json
 .mcp.local.json
 logs/*
+client_secret_*.apps.googleusercontent.com.json

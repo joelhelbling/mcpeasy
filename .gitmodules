@@ -1,0 +1,3 @@
+[submodule "utilities/google-docs-mcp"]
+	path = utilities/google-docs-mcp
+	url = https://github.com/a-bonus/google-docs-mcp.git

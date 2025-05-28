@@ -102,7 +102,7 @@ class GoogleAuthServer
         </style>
       </head>
       <body>
-        <h1 class="success">✅ Authorization Successful!</h1>
+        <h1 class="success">&#x2713; Authorization Successful!</h1>
         <p>You can now close this window and return to your terminal.</p>
       </body>
       </html>
@@ -121,7 +121,7 @@ class GoogleAuthServer
         </style>
       </head>
       <body>
-        <h1 class="error">❌ Authorization Failed</h1>
+        <h1 class="error">&#x2717; Authorization Failed</h1>
         <p>Error: #{error}</p>
         <p>Please try again from your terminal.</p>
       </body>

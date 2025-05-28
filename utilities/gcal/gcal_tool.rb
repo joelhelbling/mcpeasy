@@ -8,8 +8,7 @@ require "fileutils"
 require "json"
 require "time"
 require "dotenv/load"
-require "webrick"
-require "timeout"
+require_relative "../_google/auth_server"
 
 class GcalTool
   SCOPES = [
@@ -165,8 +164,6 @@ class GcalTool
 
     # Start callback server to capture OAuth code
     puts "Starting temporary web server to capture OAuth callback..."
-    server, server_thread = start_callback_server
-
     puts "Opening authorization URL in your default browser..."
     puts url
     puts
@@ -181,7 +178,7 @@ class GcalTool
     puts "Waiting for OAuth callback... (will timeout in 60 seconds)"
 
     # Wait for the authorization code with timeout
-    code = wait_for_auth_code(server, server_thread)
+    code = GoogleAuthServer.capture_auth_code
 
     unless code
       raise "Failed to receive authorization code. Please try again."
@@ -211,133 +208,6 @@ class GcalTool
   end
 
   private
-
-  def start_callback_server(port = 8080)
-    server = WEBrick::HTTPServer.new(
-      Port: port,
-      Logger: WEBrick::Log.new(File::NULL),
-      AccessLog: [],
-      BindAddress: "127.0.0.1"
-    )
-
-    # Store the authorization code in an instance variable accessible by the server
-    @auth_code = nil
-    @auth_received = false
-
-    server.mount_proc("/") do |req, res|
-      if req.query["code"]
-        @auth_code = req.query["code"]
-        @auth_received = true
-        res.content_type = "text/html"
-        res.body = <<~HTML
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Authorization Successful</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              .success { color: #28a745; }
-            </style>
-          </head>
-          <body>
-            <h1 class="success">✅ Authorization Successful!</h1>
-            <p>You can now close this window and return to your terminal.</p>
-          </body>
-          </html>
-        HTML
-
-        # Schedule server shutdown after response is sent
-        Thread.new do
-          sleep 0.5
-          server.shutdown
-        end
-      elsif req.query["error"]
-        @auth_received = true
-        res.content_type = "text/html"
-        res.body = <<~HTML
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Authorization Failed</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              .error { color: #dc3545; }
-            </style>
-          </head>
-          <body>
-            <h1 class="error">❌ Authorization Failed</h1>
-            <p>Error: #{req.query["error"]}</p>
-            <p>Please try again from your terminal.</p>
-          </body>
-          </html>
-        HTML
-
-        Thread.new do
-          sleep 0.5
-          server.shutdown
-        end
-      else
-        res.content_type = "text/html"
-        res.body = <<~HTML
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Waiting for Authorization</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-            </style>
-          </head>
-          <body>
-            <h1>Waiting for Authorization...</h1>
-            <p>Please complete the authorization process.</p>
-          </body>
-          </html>
-        HTML
-      end
-    end
-
-    # Start server in background thread
-    server_thread = Thread.new do
-      server.start
-    rescue => e
-      puts "Server error: #{e.message}" unless e.message.include?("shutdown")
-    end
-
-    # Give server a moment to start
-    sleep 0.1
-
-    [server, server_thread]
-  rescue => e
-    raise "Failed to start callback server: #{e.message}"
-  end
-
-  def wait_for_auth_code(server, server_thread, timeout_seconds = 60)
-    begin
-      Timeout.timeout(timeout_seconds) do
-        until @auth_received
-          sleep 0.1
-
-          # Check if server thread died unexpectedly
-          unless server_thread.alive?
-            break
-          end
-        end
-      end
-    rescue Timeout::Error
-      puts "\n⏰ Timeout waiting for authorization. Please try again."
-      return nil
-    ensure
-      # Ensure server is stopped
-      begin
-        server&.shutdown
-        server_thread&.join(2)
-      rescue
-        # Ignore shutdown errors
-      end
-    end
-
-    @auth_code
-  end
 
   def authorize
     unless File.exist?(TOKEN_PATH)

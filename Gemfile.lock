@@ -20,6 +20,8 @@ GEM
       net-http (>= 0.5.0)
     gli (2.22.2)
       ostruct
+    google-apis-calendar_v3 (0.48.0)
+      google-apis-core (>= 0.15.0, < 2.a)
     google-apis-core (0.18.0)
       addressable (~> 2.5, >= 2.5.1)
       googleauth (~> 1.9)
@@ -130,6 +132,7 @@ PLATFORMS
 
 DEPENDENCIES
   dotenv (~> 2.8)
+  google-apis-calendar_v3 (~> 0.35)
   google-apis-drive_v3 (~> 0.45)
   googleauth (~> 1.8)
   slack-ruby-client (~> 2.1)

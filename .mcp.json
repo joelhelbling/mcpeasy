@@ -42,6 +42,26 @@
         "./utilities/gdrive/mcp.rb"
       ],
       "env": {}
+    },
+    "gcal": {
+      "type": "stdio",
+      "command": "bundle",
+      "args": [
+        "exec",
+        "ruby",
+        "./utilities/gcal/mcp.rb"
+      ],
+      "env": {}
+    },
+    "gmeet": {
+      "type": "stdio",
+      "command": "bundle",
+      "args": [
+        "exec",
+        "ruby",
+        "./utilities/gmeet/mcp.rb"
+      ],
+      "env": {}
     }
   }
 }

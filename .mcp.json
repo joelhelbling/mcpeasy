@@ -32,17 +32,6 @@
         "./utilities/slack/mcp.rb"
       ],
       "env": {}
-    },
-    "gdrive": {
-      "command": "docker",
-      "args": ["run", "-i", "--rm", "-v", "mcp-gdrive:/gdrive-server", "-e", "GDRIVE_CREDENTIALS_PATH=/gdrive-server/credentials.json", "mcp/gdrive"]
-    },
-    "google-docs-mcp": {
-      "command": "node",
-      "args": [
-        "./utilities/google-docs-mcp/server.js"
-      ],
-      "env": {}
     }
   }
 }

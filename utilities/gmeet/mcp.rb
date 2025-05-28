@@ -414,7 +414,7 @@ class MCPServer
     output << "   - End: #{format_datetime(result[:end])}\n"
     output << "   - **Meet Link: #{result[:meet_link]}**\n"
     output << "   - Event ID: #{result[:event_id]}\n"
-    
+
     output
   end
 

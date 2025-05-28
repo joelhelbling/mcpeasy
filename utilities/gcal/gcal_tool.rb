@@ -12,8 +12,12 @@ require "webrick"
 require "timeout"
 
 class GcalTool
-  SCOPE = "https://www.googleapis.com/auth/calendar.readonly"
-  TOKEN_PATH = ".gcal-token.json"
+  SCOPES = [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/drive.readonly"
+  ]
+  SCOPE = SCOPES.join(" ")
+  TOKEN_PATH = ".google-token.json"
 
   def initialize(skip_auth: false)
     ensure_env!

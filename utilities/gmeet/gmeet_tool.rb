@@ -153,7 +153,7 @@ class GmeetTool
   def get_meeting_url(event_id, calendar_id: "primary")
     event = @service.get_event(calendar_id, event_id)
     meet_link = extract_meet_link(event)
-    
+
     unless meet_link
       raise "No Google Meet link found for this event"
     end
@@ -215,7 +215,7 @@ class GmeetTool
     puts "Opening authorization URL in your default browser..."
     puts url
     puts
-    
+
     # Automatically open URL in default browser on macOS/Unix
     if system("which open > /dev/null 2>&1")
       system("open", url)
@@ -308,27 +308,27 @@ class GmeetTool
 
   def extract_meet_link(event)
     # Check various places where Google Meet links might be stored
-    
+
     # 1. Check conference data (most reliable)
     if event.conference_data&.conference_solution&.name == "Google Meet"
       return event.conference_data.entry_points&.find { |ep| ep.entry_point_type == "video" }&.uri
     end
-    
+
     # 2. Check hangout link (legacy)
     return event.hangout_link if event.hangout_link
-    
+
     # 3. Check description for meet.google.com links
     if event.description
       meet_match = event.description.match(/https:\/\/meet\.google\.com\/[a-z-]+/)
       return meet_match[0] if meet_match
     end
-    
+
     # 4. Check location field
     if event.location
       meet_match = event.location.match(/https:\/\/meet\.google\.com\/[a-z-]+/)
       return meet_match[0] if meet_match
     end
-    
+
     nil
   end
 
@@ -357,10 +357,10 @@ class GmeetTool
   def time_until_event(event_time)
     now = Time.now
     event_time = event_time.is_a?(String) ? Time.parse(event_time) : event_time
-    
+
     diff_seconds = (event_time - now).to_i
     return "started" if diff_seconds < 0
-    
+
     if diff_seconds < 60
       "#{diff_seconds} seconds"
     elsif diff_seconds < 3600

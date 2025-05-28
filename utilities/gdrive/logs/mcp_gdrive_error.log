@@ -1,0 +1,13 @@
+2025-05-27 23:17:09 -0400: authorize error: RuntimeError: Google Drive authentication required!
+Run the CLI with 'auth' command first:
+ruby cli.rb auth
+
+/Users/joelhelbling/code/ai/claude-code-utilities/utilities/gdrive/gdrive_tool.rb:181:in 'GdriveTool#authorize'
+/Users/joelhelbling/code/ai/claude-code-utilities/utilities/gdrive/gdrive_tool.rb:38:in 'GdriveTool#initialize'
+cli.rb:10:in 'Class#new'
+cli.rb:10:in 'GdriveCLI#auth'
+/Users/joelhelbling/.asdf/installs/ruby/3.4.4/lib/ruby/gems/3.4.0/gems/thor-1.3.2/lib/thor/command.rb:28:in 'Thor::Command#run'
+/Users/joelhelbling/.asdf/installs/ruby/3.4.4/lib/ruby/gems/3.4.0/gems/thor-1.3.2/lib/thor/invocation.rb:127:in 'Thor::Invocation#invoke_command'
+/Users/joelhelbling/.asdf/installs/ruby/3.4.4/lib/ruby/gems/3.4.0/gems/thor-1.3.2/lib/thor.rb:538:in 'Thor.dispatch'
+/Users/joelhelbling/.asdf/installs/ruby/3.4.4/lib/ruby/gems/3.4.0/gems/thor-1.3.2/lib/thor/base.rb:584:in 'Thor::Base::ClassMethods#start'
+cli.rb:131:in '<main>'

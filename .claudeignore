@@ -1,3 +1,4 @@
 .env
 client_secret_*.apps.googleusercontent.com.json
 google_credentials.json
+.gdrive-token.json

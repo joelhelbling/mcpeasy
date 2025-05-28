@@ -32,6 +32,16 @@
         "./utilities/slack/mcp.rb"
       ],
       "env": {}
+    },
+    "gdrive": {
+      "type": "stdio",
+      "command": "bundle",
+      "args": [
+        "exec",
+        "ruby",
+        "./utilities/gdrive/mcp.rb"
+      ],
+      "env": {}
     }
   }
 }

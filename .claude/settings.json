@@ -7,7 +7,8 @@
       "Bash(git diff:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(open https://meet.google.com/:*)"
     ],
     "deny": []
   }

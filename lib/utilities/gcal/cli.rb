@@ -5,15 +5,6 @@ require "thor"
 require_relative "gcal_tool"
 
 class GcalCLI < Thor
-  desc "auth", "Authenticate with Google Calendar API"
-  def auth
-    tool = GcalTool.new(skip_auth: true)
-    puts "🔐 Starting Google Calendar authentication flow..."
-    tool.perform_auth_flow
-  rescue => e
-    puts "❌ Authentication failed: #{e.message}"
-    exit 1
-  end
 
   desc "test", "Test the Google Calendar API connection"
   def test
@@ -26,7 +17,7 @@ class GcalCLI < Thor
       warn "❌ Connection test failed"
     end
   rescue RuntimeError => e
-    puts "❌ Failed to connect to Google Calendar: #{e.message}"
+    puts "❌ Failed to connect to Google Calendar: #{e.message}\n\n#{e.backtrace.join("\n")}"
     exit 1
   end
 
@@ -143,4 +134,3 @@ class GcalCLI < Thor
   end
 end
 
-GcalCLI.start(ARGV)

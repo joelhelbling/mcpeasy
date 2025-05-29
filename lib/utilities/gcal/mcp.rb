@@ -3,11 +3,7 @@
 
 require "bundler/setup"
 require "json"
-require "dotenv"
 require_relative "gcal_tool"
-
-# Load environment variables from .env file
-Dotenv.load
 
 class MCPServer
   def initialize
@@ -270,7 +266,6 @@ class MCPServer
       raise "Connection test failed"
     end
   end
-
 
   def list_events(arguments)
     start_date = arguments["start_date"]

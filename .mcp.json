@@ -25,41 +25,37 @@
     },
     "slack": {
       "type": "stdio",
-      "command": "bundle",
+      "command": "./bin/mcpz",
       "args": [
-        "exec",
-        "ruby",
-        "./utilities/slack/mcp.rb"
+        "slack",
+        "mcp"
       ],
       "env": {}
     },
     "gdrive": {
       "type": "stdio",
-      "command": "bundle",
+      "command": "./bin/mcpz",
       "args": [
-        "exec",
-        "ruby",
-        "./utilities/gdrive/mcp.rb"
+        "gdrive",
+        "mcp"
       ],
       "env": {}
     },
     "gcal": {
       "type": "stdio",
-      "command": "bundle",
+      "command": "./bin/mcpz",
       "args": [
-        "exec",
-        "ruby",
-        "./utilities/gcal/mcp.rb"
+        "gcal",
+        "mcp"
       ],
       "env": {}
     },
     "gmeet": {
       "type": "stdio",
-      "command": "bundle",
+      "command": "./bin/mcpz",
       "args": [
-        "exec",
-        "ruby",
-        "./utilities/gmeet/mcp.rb"
+        "gmeet",
+        "mcp"
       ],
       "env": {}
     }

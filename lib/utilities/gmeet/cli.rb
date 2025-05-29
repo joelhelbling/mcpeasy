@@ -5,16 +5,6 @@ require "thor"
 require_relative "gmeet_tool"
 
 class GmeetCLI < Thor
-  desc "auth", "Authenticate with Google Calendar API"
-  def auth
-    tool = GmeetTool.new(skip_auth: true)
-    puts "🔐 Starting Google Calendar authentication flow..."
-    tool.perform_auth_flow
-  rescue => e
-    puts "❌ Authentication failed: #{e.message}"
-    exit 1
-  end
-
   desc "test", "Test the Google Calendar API connection"
   def test
     response = tool.test_connection
@@ -166,4 +156,3 @@ class GmeetCLI < Thor
   end
 end
 
-GmeetCLI.start(ARGV)

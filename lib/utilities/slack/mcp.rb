@@ -3,11 +3,7 @@
 
 require "bundler/setup"
 require "json"
-require "dotenv"
 require_relative "slack_tool"
-
-# Load environment variables from .env file
-Dotenv.load
 
 class MCPServer
   def initialize

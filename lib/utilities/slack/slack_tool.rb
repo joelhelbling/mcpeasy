@@ -2,13 +2,13 @@
 
 require "bundler/setup"
 require "slack-ruby-client"
-require "dotenv/load"
+require "mcpeasy/config"
 
 class SlackTool
   def initialize
     ensure_env!
     @client = Slack::Web::Client.new(
-      token: ENV["SLACK_BOT_TOKEN"],
+      token: Mcpeasy::Config.slack_bot_token,
       timeout: 10, # 10 second timeout
       open_timeout: 5 # 5 second connection timeout
     )
@@ -108,10 +108,10 @@ class SlackTool
   end
 
   def ensure_env!
-    unless ENV["SLACK_BOT_TOKEN"]
+    unless Mcpeasy::Config.slack_bot_token
       raise <<~ERROR
-        SLACK_BOT_TOKEN environment variable is not set!"
-        Please add your Slack bot token to the .env file
+        Slack bot token is not configured!
+        Please run: mcp set slack_bot_token YOUR_TOKEN
       ERROR
     end
   end

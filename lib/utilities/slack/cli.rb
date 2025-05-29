@@ -73,4 +73,3 @@ class SlackCLI < Thor
   end
 end
 
-SlackCLI.start(ARGV)

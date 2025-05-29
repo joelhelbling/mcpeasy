@@ -7,8 +7,8 @@ require "signet/oauth_2/client"
 require "fileutils"
 require "json"
 require "time"
-require "dotenv/load"
 require_relative "../_google/auth_server"
+require_relative "../../mcpeasy/config"
 
 class GdriveTool
   SCOPES = [
@@ -16,8 +16,6 @@ class GdriveTool
     "https://www.googleapis.com/auth/drive.readonly"
   ]
   SCOPE = SCOPES.join(" ")
-  CREDENTIALS_PATH = ".gdrive-credentials.json"
-  TOKEN_PATH = ".google-token.json"
 
   # MIME type mappings for Google Workspace documents
   EXPORT_FORMATS = {
@@ -149,11 +147,11 @@ class GdriveTool
   end
 
   def perform_auth_flow
-    client_id = ENV["GOOGLE_CLIENT_ID"]
-    client_secret = ENV["GOOGLE_CLIENT_SECRET"]
+    client_id = Mcpeasy::Config.google_client_id
+    client_secret = Mcpeasy::Config.google_client_secret
 
     unless client_id && client_secret
-      raise "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in .env file"
+      raise "Google credentials not found. Please save your credentials.json file using: mcpz config set_google_credentials <path_to_credentials.json>"
     end
 
     # Create credentials using OAuth2 flow with localhost redirect
@@ -201,7 +199,7 @@ class GdriveTool
     client.code = code
     client.fetch_access_token!
 
-    # Save credentials to file
+    # Save credentials to config
     credentials_data = {
       client_id: client.client_id,
       client_secret: client.client_secret,
@@ -211,8 +209,8 @@ class GdriveTool
       expires_at: client.expires_at
     }
 
-    File.write(TOKEN_PATH, JSON.pretty_generate(credentials_data))
-    puts "✅ Authentication successful! Credentials saved to #{TOKEN_PATH}"
+    Mcpeasy::Config.save_google_token(credentials_data)
+    puts "✅ Authentication successful! Token saved to config"
 
     client
   rescue => e
@@ -223,56 +221,61 @@ class GdriveTool
   private
 
   def authorize
-    unless File.exist?(TOKEN_PATH)
+    credentials_data = Mcpeasy::Config.google_token
+    unless credentials_data
       raise <<~ERROR
         Google Drive authentication required!
-        Run the CLI with 'auth' command first:
-        ruby utilities/gdrive/cli.rb auth
+        Run the auth command first:
+        mcpz gdrive auth
       ERROR
     end
 
-    # Load saved credentials
-    credentials_data = JSON.parse(File.read(TOKEN_PATH))
-
     client = Signet::OAuth2::Client.new(
-      client_id: credentials_data["client_id"],
-      client_secret: credentials_data["client_secret"],
-      scope: credentials_data["scope"],
-      refresh_token: credentials_data["refresh_token"],
-      access_token: credentials_data["access_token"]
+      client_id: credentials_data.client_id,
+      client_secret: credentials_data.client_secret,
+      scope: credentials_data.scope.respond_to?(:to_a) ? credentials_data.scope.to_a.join(" ") : credentials_data.scope.to_s,
+      refresh_token: credentials_data.refresh_token,
+      access_token: credentials_data.access_token,
+      token_credential_uri: "https://oauth2.googleapis.com/token"
     )
 
     # Check if token needs refresh
-    if credentials_data["expires_at"]
-      expires_at = if credentials_data["expires_at"].is_a?(String)
-        Time.parse(credentials_data["expires_at"])
+    if credentials_data.expires_at
+      expires_at = if credentials_data.expires_at.is_a?(String)
+        Time.parse(credentials_data.expires_at)
       else
-        Time.at(credentials_data["expires_at"])
+        Time.at(credentials_data.expires_at)
       end
 
       if Time.now >= expires_at
         client.refresh!
         # Update saved credentials with new access token
-        credentials_data["access_token"] = client.access_token
-        credentials_data["expires_at"] = client.expires_at
-        File.write(TOKEN_PATH, JSON.pretty_generate(credentials_data))
+        updated_data = {
+          client_id: credentials_data.client_id,
+          client_secret: credentials_data.client_secret,
+          scope: credentials_data.scope.respond_to?(:to_a) ? credentials_data.scope.to_a.join(" ") : credentials_data.scope.to_s,
+          refresh_token: credentials_data.refresh_token,
+          access_token: client.access_token,
+          expires_at: client.expires_at
+        }
+        Mcpeasy::Config.save_google_token(updated_data)
       end
     end
 
     client
   rescue JSON::ParserError
-    raise "Invalid credentials file. Please re-run: ruby utilities/gdrive/cli.rb auth"
+    raise "Invalid token data. Please re-run: mcpz gdrive auth"
   rescue => e
     log_error("authorize", e)
     raise "Authentication failed: #{e.message}"
   end
 
   def ensure_env!
-    unless ENV["GOOGLE_CLIENT_ID"] && ENV["GOOGLE_CLIENT_SECRET"]
+    unless Mcpeasy::Config.google_client_id && Mcpeasy::Config.google_client_secret
       raise <<~ERROR
         Google API credentials not configured!
-        Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file.
-        See README.md for setup instructions.
+        Please save your Google credentials.json file using:
+        mcpz config set_google_credentials <path_to_credentials.json>
       ERROR
     end
   end

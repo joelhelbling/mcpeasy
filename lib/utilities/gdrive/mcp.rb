@@ -3,11 +3,7 @@
 
 require "bundler/setup"
 require "json"
-require "dotenv"
 require_relative "gdrive_tool"
-
-# Load environment variables from .env file
-Dotenv.load
 
 class MCPServer
   def initialize
@@ -259,7 +255,6 @@ class MCPServer
       raise "Connection test failed"
     end
   end
-
 
   def search_files(arguments)
     unless arguments["query"]

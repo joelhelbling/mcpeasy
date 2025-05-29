@@ -5,16 +5,6 @@ require "thor"
 require_relative "gdrive_tool"
 
 class GdriveCLI < Thor
-  desc "auth", "Authenticate with Google Drive API"
-  def auth
-    tool = GdriveTool.new(skip_auth: true)
-    puts "🔐 Starting Google Drive authentication flow..."
-    tool.perform_auth_flow
-  rescue => e
-    puts "❌ Authentication failed: #{e.message}"
-    exit 1
-  end
-
   desc "test", "Test the Google Drive API connection"
   def test
     response = tool.test_connection
@@ -127,4 +117,3 @@ class GdriveCLI < Thor
   end
 end
 
-GdriveCLI.start(ARGV)

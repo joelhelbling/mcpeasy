@@ -20,14 +20,9 @@ A Model Context Protocol (MCP) server for Google Meet integration. This tool all
 4. Create credentials (OAuth 2.0 Client ID) for a "Desktop application"
 5. Download the credentials and note the Client ID and Client Secret
 
-### 2. Environment Configuration
+### 2. OAuth Credentials Setup
 
-Create a `.env` file in the project root with your Google API credentials:
-
-```bash
-GOOGLE_CLIENT_ID=your_client_id_here
-GOOGLE_CLIENT_SECRET=your_client_secret_here
-```
+The Google OAuth credentials will be configured during the authentication process. You'll need the Client ID and Client Secret from your Google Cloud Console setup.
 
 ### 3. Install Dependencies
 
@@ -40,13 +35,10 @@ bundle install
 Run the authentication flow to get access to your Google Calendar:
 
 ```bash
-ruby utilities/gmeet/cli.rb auth
+mcpz google auth
 ```
 
-This will:
-- Open your browser for Google OAuth authorization
-- Save authentication tokens to `.gcal-token.json`
-- Allow the tool to access your calendar data
+This will open a browser for Google OAuth authorization and save credentials to `~/.config/mcpeasy/google/token.json`. The credentials are shared with all Google services.
 
 ## Usage
 
@@ -54,31 +46,31 @@ This will:
 
 **Test connection:**
 ```bash
-ruby utilities/gmeet/cli.rb test
+mcpz gmeet test
 ```
 
 **List Google Meet meetings:**
 ```bash
-ruby utilities/gmeet/cli.rb meetings
-ruby utilities/gmeet/cli.rb meetings --start_date 2024-01-01 --end_date 2024-01-07
-ruby utilities/gmeet/cli.rb meetings --max_results 10
+mcpz gmeet meetings
+mcpz gmeet meetings --start_date 2024-01-01 --end_date 2024-01-07
+mcpz gmeet meetings --max_results 10
 ```
 
 **List upcoming meetings:**
 ```bash
-ruby utilities/gmeet/cli.rb upcoming
-ruby utilities/gmeet/cli.rb upcoming --max_results 5
+mcpz gmeet upcoming
+mcpz gmeet upcoming --max_results 5
 ```
 
 **Search for meetings:**
 ```bash
-ruby utilities/gmeet/cli.rb search "standup"
-ruby utilities/gmeet/cli.rb search "team meeting" --start_date 2024-01-01
+mcpz gmeet search "standup"
+mcpz gmeet search "team meeting" --start_date 2024-01-01
 ```
 
 **Get meeting URL by event ID:**
 ```bash
-ruby utilities/gmeet/cli.rb url event_id_here
+mcpz gmeet url event_id_here
 ```
 
 ### MCP Server Mode
@@ -87,11 +79,10 @@ Configure in your `.mcp.json`:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "gmeet": {
-      "command": "ruby",
-      "args": ["utilities/gmeet/mcp.rb"],
-      "cwd": "/path/to/claude-code-utilities"
+      "command": "mcpz",
+      "args": ["gmeet", "mcp"]
     }
   }
 }
@@ -120,9 +111,9 @@ The tool uses the Google Calendar API to:
 ## Troubleshooting
 
 **Authentication Issues:**
-- Ensure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set in `.env`
-- Re-run the auth flow: `ruby utilities/gmeet/cli.rb auth`
+- Re-run the auth flow: `mcpz google auth`
 - Check that the Google Calendar API is enabled in your Google Cloud project
+- Verify your Google OAuth credentials are configured correctly
 
 **No meetings found:**
 - Verify you have Google Meet meetings in your calendar

@@ -1,92 +1,137 @@
-I'll create a Ruby script that posts messages to Slack using the Slack Web API. Here are the files you'll need:
+# MCPEasy
 
-## Setup Instructions
+A Ruby gem that provides multiple Model Context Protocol (MCP) servers for integrating with AI assistants like Claude Code. Each MCP server provides programmatic access to popular web services and APIs.
 
-### 1. Install Dependencies
+## Installation
 
-First, run `bundle install` to install the required gems:
+Install the gem globally:
 
 ```bash
-bundle install
+gem install mcpeasy
 ```
 
-### 2. Create a Slack App and Get API Token
+This makes the `mcpz` command available system-wide for both CLI usage and MCP server configuration.
 
-To get your Slack bot token:
+## Available MCP Servers
 
-1. Go to https://api.slack.com/apps
-2. Click "Create New App" → "From scratch"
-3. Give your app a name and select your workspace
-4. Go to "OAuth & Permissions" in the sidebar
-5. Under "Scopes" → "Bot Token Scopes", add these permissions:
-   - `chat:write` (to post messages)
-   - `channels:read` (to list public channels)
-   - `groups:read` (to list private channels, optional)
-6. Click "Install to Workspace" at the top
-7. Copy the "Bot User OAuth Token" (starts with `xoxb-`)
+This gem includes the following MCP servers, each providing both CLI and MCP server functionality:
 
-### 3. Configure Environment Variables
+### 🗣️ [Slack](./lib/utilities/slack/)
+Post messages to Slack channels and list available channels.
+- CLI: Direct message posting with custom usernames
+- MCP: Integration for AI assistants to send Slack notifications
 
-1. Create a `.env` file with your API tokens:
-   ```bash
-   # .env
-   SLACK_BOT_TOKEN=xoxb-your-actual-slack-token
-   GITHUB_PERSONAL_ACCESS_TOKEN=github_pat_your-actual-github-token
-   ```
+### 📅 [Google Calendar](./lib/utilities/gcal/)
+Access and search Google Calendar events.
+- CLI: List events, search by date range, view calendar information
+- MCP: AI assistant access to calendar data and event search
 
-2. **For MCP server usage with Claude Code**, set up `direnv` for automatic environment loading:
+### 📂 [Google Drive](./lib/utilities/gdrive/)
+Search and retrieve files from Google Drive with automatic format conversion.
+- CLI: Search files, list recent files, retrieve content
+- MCP: AI assistant access to Drive files and documents
 
-   a. Install `direnv` if not already installed:
-   ```bash
-   # macOS
-   brew install direnv
+### 🎥 [Google Meet](./lib/utilities/gmeet/)
+Find and manage Google Meet meetings from your calendar.
+- CLI: List meetings, search by content, get meeting URLs
+- MCP: AI assistant access to upcoming meetings and direct links
 
-   # Add to your shell profile (~/.bashrc, ~/.zshrc, etc.)
-   eval "$(direnv hook bash)"  # or zsh, fish, etc.
-   ```
+## Quick Start
 
-   b. Allow `direnv` to work in this directory:
-   ```bash
-   direnv allow
-   ```
+### 1. Configuration Setup
 
-   This ensures environment variables are available to Claude Code when it launches MCP servers.
+Configure your API credentials for each service you plan to use:
 
-### 4. Usage Examples
-
-Make the script executable:
 ```bash
-chmod +x slack_poster.rb
+# For Slack
+mcpz slack set_bot_token xoxb-your-slack-token
+
+# For Google services (Calendar, Drive, Meet)
+mcpz google auth
 ```
 
-Post a simple message:
+Credentials are stored securely in `~/.config/mcpeasy/` (see individual server documentation for specific setup requirements).
+
+### 2. CLI Usage
+
+Each MCP server can be used directly from the command line:
+
 ```bash
-ruby slack_poster.rb general "Hello from Ruby!"
+# Slack
+mcpz slack post general "Hello from Ruby!"
+
+# Google Calendar  
+mcpz gcal events --start "2024-01-01"
+
+# Google Drive
+mcpz gdrive search "quarterly report"
+
+# Google Meet
+mcpz gmeet upcoming
 ```
 
-Post with a custom username:
+### 3. MCP Server Configuration
+
+For use with Claude Code, add servers to your `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "slack": {
+      "command": "mcpz",
+      "args": ["slack", "mcp"]
+    },
+    "gcal": {
+      "command": "mcpz", 
+      "args": ["gcal", "mcp"]
+    },
+    "gdrive": {
+      "command": "mcpz",
+      "args": ["gdrive", "mcp"]
+    },
+    "gmeet": {
+      "command": "mcpz",
+      "args": ["gmeet", "mcp"]
+    }
+  }
+}
+```
+
+## Development
+
+### Code Quality
+
+Run linting before committing changes:
+
 ```bash
-ruby slack_poster.rb general "Deployment completed successfully!" "DeployBot"
+bundle exec standardrb
 ```
 
-List available channels:
-```bash
-ruby slack_poster.rb
+### Project Structure
+
+```
+lib/
+├── mcpeasy.rb           # Main gem file
+├── mcpeasy/             # Gem core functionality
+└── utilities/           # MCP servers
+    ├── slack/           # Slack integration
+    ├── gcal/            # Google Calendar
+    ├── gdrive/          # Google Drive  
+    └── gmeet/           # Google Meet
 ```
 
-## Features
+### Contributing
 
-- **Error handling**: Comprehensive error handling for API failures
-- **Connection testing**: Verifies authentication before posting
-- **Channel listing**: Shows available channels if no arguments provided
-- **Flexible usage**: Supports custom usernames and channel names with or without `#`
-- **Environment variables**: Secure token storage using dotenv
+1. Follow existing code patterns and Ruby style conventions
+2. Add comprehensive error handling and logging
+3. Update relevant documentation for new features
+4. Test both CLI and MCP server modes
+5. Run `bundle exec standardrb` before submitting changes
 
-## Required Slack Permissions
+## License
 
-Your Slack app needs these OAuth scopes:
-- `chat:write` - Required to post messages
-- `channels:read` - Optional, for listing public channels
-- `groups:read` - Optional, for listing private channels
+This project is licensed under the MIT License.
 
-The script will work with just `chat:write` if you know your channel names, but the other permissions enable the channel listing feature.
+## Support
+
+For issues, questions, or contributions, please visit the project repository.

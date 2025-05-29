@@ -31,7 +31,6 @@ Required gems:
 - `google-apis-drive_v3` - Google Drive API client
 - `googleauth` - Google OAuth authentication
 - `thor` - CLI framework
-- `dotenv` - Environment variable management
 
 ### 2. Google Cloud Platform Setup
 
@@ -62,38 +61,21 @@ Required gems:
 7. Click **Create**
 8. Download the JSON file containing your client ID and secret
 
-#### Step 4: Configure Environment Variables
+#### Step 4: Configure OAuth Credentials
 
-1. Copy the `env.template` file to `.env` in the project root:
-   ```bash
-   cp env.template .env
-   ```
+The Google OAuth credentials will be configured during the authentication process. You'll need the Client ID and Client Secret from the JSON file you downloaded in Step 3.
 
-2. Add your Google OAuth credentials to `.env`:
-   ```bash
-   # Google Drive API credentials
-   GOOGLE_CLIENT_ID="your_client_id_here.apps.googleusercontent.com"
-   GOOGLE_CLIENT_SECRET="your_client_secret_here"
-   ```
-
-   Extract these values from the JSON file you downloaded in Step 3.
+**Note**: All Google services (Calendar, Drive, Meet) share the same authentication system, so you only need to authenticate once.
 
 ## Authentication
 
 Before using the Google Drive MCP server, you need to authenticate with Google:
 
 ```bash
-cd utilities/gdrive
-ruby cli.rb auth
+mcpz google auth
 ```
 
-This will:
-1. Open a browser window for Google OAuth
-2. Ask you to sign in and authorize the application
-3. Prompt you to enter the authorization code
-4. Save credentials to `.gdrive-token.json`
-
-**Note**: The credentials are saved locally and will be automatically refreshed when needed.
+This will open a browser for Google OAuth authorization and save credentials to `~/.config/mcpeasy/google/token.json`. The credentials are shared with all Google services and will be automatically refreshed when needed.
 
 ## Usage
 
@@ -101,34 +83,34 @@ This will:
 
 #### Test Connection
 ```bash
-ruby cli.rb test
+mcpz gdrive test
 ```
 
 #### Search for Files
 ```bash
 # Basic search
-ruby cli.rb search "quarterly report"
+mcpz gdrive search "quarterly report"
 
 # Limit results
-ruby cli.rb search "meeting notes" --max-results 5
+mcpz gdrive search "meeting notes" --max-results 5
 ```
 
 #### List Recent Files
 ```bash
 # List 20 most recent files
-ruby cli.rb list
+mcpz gdrive list
 
 # Limit results
-ruby cli.rb list --max-results 10
+mcpz gdrive list --max-results 10
 ```
 
 #### Get File Content
 ```bash
 # Display content in terminal
-ruby cli.rb get "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+mcpz gdrive get "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
 
 # Save to file
-ruby cli.rb get "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms" --output document.md
+mcpz gdrive get "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms" --output document.md
 ```
 
 ### MCP Server Mode
@@ -141,9 +123,8 @@ Add to your `.mcp.json` configuration:
 {
   "mcpServers": {
     "gdrive": {
-      "command": "ruby",
-      "args": ["utilities/gdrive/mcp.rb"],
-      "cwd": "/path/to/your/project"
+      "command": "mcpz",
+      "args": ["gdrive", "mcp"]
     }
   }
 }
@@ -152,7 +133,7 @@ Add to your `.mcp.json` configuration:
 #### Run as Standalone MCP Server
 
 ```bash
-ruby mcp.rb
+mcpz gdrive mcp
 ```
 
 The server provides these tools to Claude Code:
@@ -187,7 +168,7 @@ All other file types (PDFs, images, text files, etc.) are downloaded in their or
 
 ### Local File Storage
 
-- **Credentials**: Stored in `.gdrive-token.json` (git-ignored)
+- **Credentials**: Stored in `~/.config/mcpeasy/google/token.json`
 - **Logs**: Stored in `./logs/mcp_gdrive_*.log`
 
 ### Best Practices
@@ -202,14 +183,13 @@ All other file types (PDFs, images, text files, etc.) are downloaded in their or
 ### Common Issues
 
 #### "Authentication required" Error
-- Run `ruby cli.rb auth` to authenticate
-- Check that `.gdrive-token.json` exists and is valid
-- Verify your `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
+- Run `mcpz google auth` to authenticate
+- Check that `~/.config/mcpeasy/google/token.json` exists and is valid
+- Verify your Google OAuth credentials are configured correctly
 
 #### "Bad credentials" Error
 - Regenerate OAuth credentials in Google Cloud Console
-- Update `.env` file with new credentials
-- Re-run authentication: `ruby cli.rb auth`
+- Re-run authentication: `mcpz google auth`
 
 #### "Quota exceeded" Error
 - Check your Google Cloud Console for API quota limits
@@ -237,12 +217,12 @@ tail -f logs/mcp_gdrive_startup.log
 
 1. **Test CLI authentication**:
    ```bash
-   ruby cli.rb test
+   mcpz gdrive test
    ```
 
 2. **Test MCP server**:
    ```bash
-   echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ruby mcp.rb
+   echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | mcpz gdrive mcp
    ```
 
 ## Development
@@ -270,11 +250,11 @@ utilities/gdrive/
 bundle exec standardrb
 
 # Test CLI commands
-ruby cli.rb test
-ruby cli.rb list --max-results 5
+mcpz gdrive test
+mcpz gdrive list --max-results 5
 
 # Test MCP server manually
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | ruby mcp.rb
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | mcpz gdrive mcp
 ```
 
 ## Contributing

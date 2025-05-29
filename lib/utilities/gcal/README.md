@@ -8,7 +8,7 @@ A Ruby-based Model Context Protocol (MCP) server that provides programmatic acce
 ## Features
 
 - 📅 **List events** from your Google Calendar with date range filtering
-- 📋 **Get calendar information** including calendar metadata
+- 📋 **List calendars** and view calendar metadata
 - 🔍 **Search events** by text content
 - 🔐 **OAuth 2.0 authentication** with credential persistence (shares credentials with gdrive utility)
 - 🛡️ **Error handling** with retry logic and comprehensive logging
@@ -26,7 +26,6 @@ Required gems:
 - `google-apis-calendar_v3` - Google Calendar API client
 - `googleauth` - Google OAuth authentication
 - `thor` - CLI framework
-- `dotenv` - Environment variable management
 
 ### 2. Google Cloud Platform Setup
 
@@ -57,40 +56,21 @@ Required gems:
 7. Click **Create**
 8. Download the JSON file containing your client ID and secret
 
-#### Step 4: Configure Environment Variables
+#### Step 4: Configure OAuth Credentials
 
-1. Copy the `env.template` file to `.env` in the project root:
-   ```bash
-   cp env.template .env
-   ```
+The Google OAuth credentials will be configured during the authentication process. You'll need the Client ID and Client Secret from the JSON file you downloaded in Step 3.
 
-2. Add your Google OAuth credentials to `.env`:
-   ```bash
-   # Google API credentials (shared with gdrive utility)
-   GOOGLE_CLIENT_ID="your_client_id_here.apps.googleusercontent.com"
-   GOOGLE_CLIENT_SECRET="your_client_secret_here"
-   ```
-
-   Extract these values from the JSON file you downloaded in Step 3.
-
-**Note**: If you've already set up the gdrive utility, you can use the same OAuth credentials since both utilities share the same authentication system.
+**Note**: All Google services (Calendar, Drive, Meet) share the same authentication system, so you only need to authenticate once.
 
 ## Authentication
 
 Before using the Google Calendar MCP server, you need to authenticate with Google:
 
 ```bash
-cd utilities/gcal
-ruby cli.rb auth
+mcpz google auth
 ```
 
-This will:
-1. Open a browser window for Google OAuth
-2. Ask you to sign in and authorize the application
-3. Prompt you to enter the authorization code
-4. Save credentials to `.gcal-token.json`
-
-**Note**: The credentials are saved locally and will be automatically refreshed when needed.
+This will open a browser for Google OAuth authorization and save credentials to `~/.config/mcpeasy/google/token.json`. The credentials are shared with all Google services and will be automatically refreshed when needed.
 
 ## Usage
 
@@ -98,24 +78,24 @@ This will:
 
 #### Test Connection
 ```bash
-ruby cli.rb test
+mcpz gcal test
 ```
 
 #### List Events
 ```bash
 # List today's events
-ruby cli.rb events
+mcpz gcal events
 
 # List events for a specific date range
-ruby cli.rb events --start "2024-01-01" --end "2024-01-31"
+mcpz gcal events --start "2024-01-01" --end "2024-01-31"
 
 # Limit results
-ruby cli.rb events --max-results 10
+mcpz gcal events --max-results 10
 ```
 
 #### List Calendars
 ```bash
-ruby cli.rb calendars
+mcpz gcal calendars
 ```
 
 ### MCP Server Mode
@@ -128,9 +108,8 @@ Add to your `.mcp.json` configuration:
 {
   "mcpServers": {
     "gcal": {
-      "command": "ruby",
-      "args": ["utilities/gcal/mcp.rb"],
-      "cwd": "/path/to/your/project"
+      "command": "mcpz",
+      "args": ["gcal", "mcp"]
     }
   }
 }
@@ -139,7 +118,7 @@ Add to your `.mcp.json` configuration:
 #### Run as Standalone MCP Server
 
 ```bash
-ruby mcp.rb
+mcpz gcal mcp
 ```
 
 The server provides these tools to Claude Code:
@@ -157,7 +136,7 @@ The server provides these tools to Claude Code:
 
 ### Local File Storage
 
-- **Credentials**: Stored in `.gcal-token.json` (git-ignored)
+- **Credentials**: Stored in `~/.config/mcpeasy/google/token.json`
 - **Logs**: Stored in `./logs/mcp_gcal_*.log`
 
 ### Best Practices
@@ -172,14 +151,13 @@ The server provides these tools to Claude Code:
 ### Common Issues
 
 #### "Authentication required" Error
-- Run `ruby cli.rb auth` to authenticate
-- Check that `.gcal-token.json` exists and is valid
-- Verify your `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
+- Run `mcpz google auth` to authenticate
+- Check that `~/.config/mcpeasy/google/token.json` exists and is valid
+- Verify your Google OAuth credentials are configured correctly
 
 #### "Bad credentials" Error
 - Regenerate OAuth credentials in Google Cloud Console
-- Update `.env` file with new credentials
-- Re-run authentication: `ruby cli.rb auth`
+- Re-run authentication: `mcpz google auth`
 
 #### "Calendar API has not been used" Error
 - Ensure the Google Calendar API is enabled in your project
@@ -207,12 +185,12 @@ tail -f logs/mcp_gcal_startup.log
 
 1. **Test CLI authentication**:
    ```bash
-   ruby cli.rb test
+   mcpz gcal test
    ```
 
 2. **Test MCP server**:
    ```bash
-   echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ruby mcp.rb
+   echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | mcpz gcal mcp
    ```
 
 ## Development
@@ -240,11 +218,11 @@ utilities/gcal/
 bundle exec standardrb
 
 # Test CLI commands
-ruby cli.rb test
-ruby cli.rb events --max-results 5
+mcpz gcal test
+mcpz gcal events --max-results 5
 
 # Test MCP server manually
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | ruby mcp.rb
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | mcpz gcal mcp
 ```
 
 ## Contributing

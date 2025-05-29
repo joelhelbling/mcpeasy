@@ -6,3 +6,4 @@ logs/*
 client_secret_*.apps.googleusercontent.com.json
 google_credentials.json
 .google-token.json
+*.gem

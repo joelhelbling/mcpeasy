@@ -88,7 +88,7 @@ module Mcpeasy
     desc "version", "Show mcpeasy version"
     def version
       puts "mcpeasy #{Mcpeasy::VERSION}"
-      puts "mcpeasy, LLM squeezy! 🤖"
+      puts "mcpeasy, LM squeezy! 🤖"
     end
 
     desc "config", "Show configuration status"

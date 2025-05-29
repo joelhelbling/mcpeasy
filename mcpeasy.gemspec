@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["joel@joelhelbling.com"]
 
   spec.summary = "MCP servers made easy"
-  spec.description = "mcpeasy, LLM squeezy - Easy-to-use MCP servers for Google Calendar, Google Drive, Google Meet, and Slack"
+  spec.description = "mcpeasy, LM squeezy - Easy-to-use MCP servers for Google Calendar, Google Drive, Google Meet, and Slack"
   spec.homepage = "https://github.com/joelhelbling/mcpeasy"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
@@ -40,6 +40,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "mother", "~> 0.1"
 
   # Development dependencies
-  spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "standard", "~> 1.50"
 end

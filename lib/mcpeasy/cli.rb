@@ -91,6 +91,12 @@ module Mcpeasy
       puts "mcpeasy, LM squeezy! 🤖"
     end
 
+    desc "setup", "Create configuration directories"
+    def setup
+      require_relative "setup"
+      Setup.create_config_directories
+    end
+
     desc "config", "Show configuration status"
     def config
       status = Config.config_status

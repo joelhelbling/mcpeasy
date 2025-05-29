@@ -99,6 +99,24 @@ For use with Claude Code, add servers to your `.mcp.json`:
 
 ## Development
 
+### Setup
+
+1. Clone the repository and install dependencies:
+   ```bash
+   git clone <repository-url>
+   cd mcpeasy
+   bundle install
+   ```
+
+2. Create configuration directories (if not automatically created):
+   ```bash
+   # Run manually during development
+   bundle exec ruby -r "./lib/mcpeasy/setup" -e "Mcpeasy::Setup.create_config_directories"
+   
+   # Or use the CLI command after building the gem locally
+   bin/mcpz setup
+   ```
+
 ### Code Quality
 
 Run linting before committing changes:

@@ -11,8 +11,6 @@ Dotenv.load
 
 class MCPServer
   def initialize
-    # Defer GdriveTool initialization until actually needed
-    @gdrive_tool = nil
     @tools = {
       "test_connection" => {
         name: "test_connection",
@@ -251,7 +249,8 @@ class MCPServer
   end
 
   def test_connection
-    response = @gdrive_tool.test_connection
+    tool = GdriveTool.new
+    response = tool.test_connection
     if response[:ok]
       "✅ Successfully connected to Google Drive.\n" \
       "   User: #{response[:user]} (#{response[:email]})\n" \
@@ -261,6 +260,7 @@ class MCPServer
     end
   end
 
+
   def search_files(arguments)
     unless arguments["query"]
       raise "Missing required argument: query"
@@ -269,7 +269,8 @@ class MCPServer
     query = arguments["query"].to_s
     max_results = arguments["max_results"]&.to_i || 10
 
-    result = @gdrive_tool.search_files(query, max_results: max_results)
+    tool = GdriveTool.new
+    result = tool.search_files(query, max_results: max_results)
     files = result[:files]
 
     if files.empty?
@@ -294,7 +295,8 @@ class MCPServer
     end
 
     file_id = arguments["file_id"].to_s
-    result = @gdrive_tool.get_file_content(file_id)
+    tool = GdriveTool.new
+    result = tool.get_file_content(file_id)
 
     output = "📄 **#{result[:name]}**\n"
     output << "   - Type: #{result[:mime_type]}\n"
@@ -306,7 +308,8 @@ class MCPServer
 
   def list_files(arguments)
     max_results = arguments["max_results"]&.to_i || 20
-    result = @gdrive_tool.list_files(max_results: max_results)
+    tool = GdriveTool.new
+    result = tool.list_files(max_results: max_results)
     files = result[:files]
 
     if files.empty?

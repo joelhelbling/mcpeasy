@@ -11,8 +11,6 @@ Dotenv.load
 
 class MCPServer
   def initialize
-    # Defer GcalTool initialization until actually needed
-    @gcal_tool = nil
     @tools = {
       "test_connection" => {
         name: "test_connection",
@@ -248,9 +246,6 @@ class MCPServer
   end
 
   def call_tool(tool_name, arguments)
-    # Initialize GcalTool only when needed
-    @gcal_tool ||= GcalTool.new
-
     case tool_name
     when "test_connection"
       test_connection
@@ -266,7 +261,8 @@ class MCPServer
   end
 
   def test_connection
-    response = @gcal_tool.test_connection
+    tool = GcalTool.new
+    response = tool.test_connection
     if response[:ok]
       "✅ Successfully connected to Google Calendar.\n" \
       "   User: #{response[:user]} (#{response[:email]})"
@@ -275,13 +271,15 @@ class MCPServer
     end
   end
 
+
   def list_events(arguments)
     start_date = arguments["start_date"]
     end_date = arguments["end_date"]
     max_results = arguments["max_results"]&.to_i || 20
     calendar_id = arguments["calendar_id"] || "primary"
 
-    result = @gcal_tool.list_events(
+    tool = GcalTool.new
+    result = tool.list_events(
       start_date: start_date,
       end_date: end_date,
       max_results: max_results,
@@ -307,7 +305,8 @@ class MCPServer
   end
 
   def list_calendars(arguments)
-    result = @gcal_tool.list_calendars
+    tool = GcalTool.new
+    result = tool.list_calendars
     calendars = result[:calendars]
 
     if calendars.empty?
@@ -337,7 +336,8 @@ class MCPServer
     end_date = arguments["end_date"]
     max_results = arguments["max_results"]&.to_i || 10
 
-    result = @gcal_tool.search_events(
+    tool = GcalTool.new
+    result = tool.search_events(
       query,
       start_date: start_date,
       end_date: end_date,

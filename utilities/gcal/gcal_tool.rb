@@ -135,6 +135,13 @@ class GcalTool
     raise e
   end
 
+  def authenticate
+    perform_auth_flow
+    {success: true}
+  rescue => e
+    {success: false, error: e.message}
+  end
+
   def perform_auth_flow
     client_id = ENV["GOOGLE_CLIENT_ID"]
     client_secret = ENV["GOOGLE_CLIENT_SECRET"]

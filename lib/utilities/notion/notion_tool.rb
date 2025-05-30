@@ -75,7 +75,7 @@ class NotionTool
     raise e
   end
 
-  def query_database(database_id, filters: {}, sorts: [], page_size: 10)
+  def query_database(database_id, filters: {}, sorts: [], page_size: 100, start_cursor: nil)
     clean_id = clean_notion_id(database_id)
 
     body = {
@@ -83,10 +83,11 @@ class NotionTool
     }
     body[:filter] = filters unless filters.empty?
     body[:sorts] = sorts unless sorts.empty?
+    body[:start_cursor] = start_cursor if start_cursor
 
     response = post_request("/databases/#{clean_id}/query", body)
 
-    response["results"].map do |page|
+    entries = response["results"].map do |page|
       {
         id: page["id"],
         title: extract_title(page),
@@ -96,6 +97,12 @@ class NotionTool
         properties: page["properties"]
       }
     end
+
+    {
+      entries: entries,
+      has_more: response["has_more"],
+      next_cursor: response["next_cursor"]
+    }
   rescue => e
     log_error("query_database", e)
     raise e
@@ -113,10 +120,70 @@ class NotionTool
     {ok: false, error: e.message}
   end
 
+  def list_users(page_size: 100, start_cursor: nil)
+    params = {page_size: [page_size.to_i, 100].min}
+    params[:start_cursor] = start_cursor if start_cursor
+
+    response = get_request("/users", params)
+
+    users = response["results"].map do |user|
+      {
+        id: user["id"],
+        type: user["type"],
+        name: user["name"],
+        avatar_url: user["avatar_url"],
+        email: user.dig("person", "email")
+      }
+    end
+
+    {
+      users: users,
+      has_more: response["has_more"],
+      next_cursor: response["next_cursor"]
+    }
+  rescue => e
+    log_error("list_users", e)
+    raise e
+  end
+
+  def get_user(user_id)
+    response = get_request("/users/#{user_id}")
+
+    {
+      id: response["id"],
+      type: response["type"],
+      name: response["name"],
+      avatar_url: response["avatar_url"],
+      email: response.dig("person", "email")
+    }
+  rescue => e
+    log_error("get_user", e)
+    raise e
+  end
+
+  def get_bot_user
+    response = get_request("/users/me")
+
+    {
+      id: response["id"],
+      type: response["type"],
+      name: response["name"],
+      bot: {
+        owner: response.dig("bot", "owner"),
+        workspace_name: response.dig("bot", "workspace_name")
+      }
+    }
+  rescue => e
+    log_error("get_bot_user", e)
+    raise e
+  end
+
   private
 
-  def get_request(path)
+  def get_request(path, params = {})
     uri = URI("#{BASE_URI}#{path}")
+    uri.query = URI.encode_www_form(params) unless params.empty?
+
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
     http.read_timeout = 10

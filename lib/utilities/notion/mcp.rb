@@ -95,10 +95,55 @@ class MCPServer
             },
             page_size: {
               type: "number",
-              description: "Maximum number of results to return (default: 10, max: 100)"
+              description: "Maximum number of results to return (default: 100, max: 100)"
+            },
+            start_cursor: {
+              type: "string",
+              description: "Cursor for pagination. Use the next_cursor from previous response to get next page"
             }
           },
           required: ["database_id"]
+        }
+      },
+      "list_users" => {
+        name: "list_users",
+        description: "List all users in the Notion workspace",
+        inputSchema: {
+          type: "object",
+          properties: {
+            page_size: {
+              type: "number",
+              description: "Maximum number of results to return (default: 100, max: 100)"
+            },
+            start_cursor: {
+              type: "string",
+              description: "Cursor for pagination. Use the next_cursor from previous response to get next page"
+            }
+          },
+          required: []
+        }
+      },
+      "get_user" => {
+        name: "get_user",
+        description: "Get details of a specific Notion user",
+        inputSchema: {
+          type: "object",
+          properties: {
+            user_id: {
+              type: "string",
+              description: "The ID of the Notion user to retrieve"
+            }
+          },
+          required: ["user_id"]
+        }
+      },
+      "get_bot_user" => {
+        name: "get_bot_user",
+        description: "Get information about the integration bot user",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
         }
       }
     }
@@ -282,6 +327,12 @@ class MCPServer
       get_page_content(arguments)
     when "query_database"
       query_database(arguments)
+    when "list_users"
+      list_users(arguments)
+    when "get_user"
+      get_user(arguments)
+    when "get_bot_user"
+      get_bot_user
     else
       raise "Unknown tool: #{tool_name}"
     end
@@ -392,23 +443,132 @@ class MCPServer
     end
 
     database_id = arguments["database_id"].to_s
-    page_size = [arguments["page_size"]&.to_i || 10, 100].min
+    page_size = [arguments["page_size"]&.to_i || 100, 100].min
+    start_cursor = arguments["start_cursor"]
 
-    entries = @notion_tool.query_database(database_id, page_size: page_size)
+    # Keep track of current page for display
+    @query_database_page ||= {}
+    @query_database_page[database_id] ||= 0
+    @query_database_page[database_id] = start_cursor ? @query_database_page[database_id] + 1 : 1
+
+    result = @notion_tool.query_database(database_id, page_size: page_size, start_cursor: start_cursor)
+    entries = result[:entries]
+
+    # Calculate record range
+    page_num = @query_database_page[database_id]
+    start_index = (page_num - 1) * page_size
+    end_index = start_index + entries.count - 1
 
     entries_list = entries.map.with_index do |entry, i|
       <<~ENTRY
-        #{i + 1}. **#{entry[:title]}**
+        #{start_index + i + 1}. **#{entry[:title]}**
            - ID: `#{entry[:id]}`
            - URL: #{entry[:url]}
            - Last edited: #{entry[:last_edited_time]}
       ENTRY
     end.join("\n")
 
+    pagination_info = if result[:has_more]
+      <<~INFO
+        
+        📄 **Page #{page_num}** | Showing records #{start_index + 1}-#{end_index + 1}
+        _More entries available. Use `start_cursor: "#{result[:next_cursor]}"` to get the next page._
+      INFO
+    else
+      # Try to estimate total if we're on last page
+      estimated_total = start_index + entries.count
+      <<~INFO
+        
+        📄 **Page #{page_num}** | Showing records #{start_index + 1}-#{end_index + 1} of #{estimated_total} total
+      INFO
+    end
+
     <<~OUTPUT
       🗃️ Found #{entries.count} entries in database:
 
-      #{entries_list}
+      #{entries_list}#{pagination_info}
+    OUTPUT
+  end
+
+  def list_users(arguments)
+    page_size = [arguments["page_size"]&.to_i || 100, 100].min
+    start_cursor = arguments["start_cursor"]
+
+    # Keep track of current page for display
+    @list_users_page ||= 0
+    @list_users_page = start_cursor ? @list_users_page + 1 : 1
+
+    result = @notion_tool.list_users(page_size: page_size, start_cursor: start_cursor)
+    users = result[:users]
+
+    # Calculate record range
+    start_index = (@list_users_page - 1) * page_size
+    end_index = start_index + users.count - 1
+
+    users_list = users.map.with_index do |user, i|
+      email_line = user[:email] ? "\n           - Email: #{user[:email]}" : ""
+      avatar_line = user[:avatar_url] ? "\n           - Avatar: #{user[:avatar_url]}" : ""
+
+      <<~USER
+        #{start_index + i + 1}. **#{user[:name] || "Unnamed"}** (#{user[:type]})
+           - ID: `#{user[:id]}`#{email_line}#{avatar_line}
+      USER
+    end.join("\n")
+
+    pagination_info = if result[:has_more]
+      <<~INFO
+        
+        📄 **Page #{@list_users_page}** | Showing records #{start_index + 1}-#{end_index + 1}
+        _More users available. Use `start_cursor: "#{result[:next_cursor]}"` to get the next page._
+      INFO
+    else
+      # Try to estimate total if we're on last page
+      estimated_total = start_index + users.count
+      <<~INFO
+        
+        📄 **Page #{@list_users_page}** | Showing records #{start_index + 1}-#{end_index + 1} of #{estimated_total} total
+      INFO
+    end
+
+    <<~OUTPUT
+      👥 Found #{users.count} users in workspace:
+      
+      #{users_list}#{pagination_info}
+    OUTPUT
+  end
+
+  def get_user(arguments)
+    unless arguments["user_id"]
+      raise "Missing required argument: user_id"
+    end
+
+    user_id = arguments["user_id"].to_s
+    user = @notion_tool.get_user(user_id)
+
+    email_line = user[:email] ? "\n**Email:** #{user[:email]}" : ""
+    avatar_line = user[:avatar_url] ? "\n**Avatar:** #{user[:avatar_url]}" : ""
+
+    <<~OUTPUT
+      👤 **User Details**
+      
+      **Name:** #{user[:name] || "Unnamed"}
+      **Type:** #{user[:type]}
+      **ID:** `#{user[:id]}`#{email_line}#{avatar_line}
+    OUTPUT
+  end
+
+  def get_bot_user
+    bot = @notion_tool.get_bot_user
+
+    workspace_line = bot[:bot][:workspace_name] ? "\n**Workspace:** #{bot[:bot][:workspace_name]}" : ""
+    owner_line = bot[:bot][:owner] ? "\n**Owner:** #{bot[:bot][:owner]}" : ""
+
+    <<~OUTPUT
+      🤖 **Bot User Details**
+      
+      **Name:** #{bot[:name] || "Unnamed"}
+      **Type:** #{bot[:type]}
+      **ID:** `#{bot[:id]}`#{workspace_line}#{owner_line}
     OUTPUT
   end
 

@@ -11,6 +11,9 @@ A Ruby-based Model Context Protocol (MCP) server that provides programmatic acce
 - 📄 **Get page details** including properties and metadata
 - 📝 **Retrieve page content** as formatted text
 - 🗃️ **Query databases** to find specific entries
+- 👥 **List users** in your Notion workspace
+- 👤 **Get user details** including email and avatar
+- 🤖 **Get bot information** for the integration
 - 🔐 **API key authentication** with secure credential storage
 - 🛡️ **Error handling** with comprehensive API failure reporting
 - ✅ **Connection testing** to verify authentication before operations
@@ -111,6 +114,18 @@ mcpz notion query_database DATABASE_ID
 mcpz notion query_database DATABASE_ID --limit 20
 ```
 
+#### User Management
+```bash
+# List all users in workspace
+mcpz notion list_users
+
+# Get details for a specific user
+mcpz notion get_user USER_ID
+
+# Get bot integration details
+mcpz notion bot_info
+```
+
 ### MCP Server Mode
 
 #### Configuration for Claude Code
@@ -142,6 +157,9 @@ The server provides these tools to Claude Code:
 - **get_page**: Get detailed information about a specific page
 - **get_page_content**: Retrieve the text content of a page
 - **query_database**: Query entries within a specific database
+- **list_users**: List all users in the workspace
+- **get_user**: Get details of a specific user
+- **get_bot_user**: Get information about the integration bot
 
 ## Security & Permissions
 
@@ -239,7 +257,9 @@ Currently implemented Notion API endpoints:
 - `/pages/{id}` - Get page details
 - `/blocks/{id}/children` - Get page content blocks
 - `/databases/{id}/query` - Query database entries
-- `/users/me` - Test authentication
+- `/users` - List all users in workspace
+- `/users/{id}` - Get specific user details
+- `/users/me` - Get bot user information and test authentication
 
 ### Testing
 

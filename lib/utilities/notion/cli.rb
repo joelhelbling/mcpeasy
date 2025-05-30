@@ -101,24 +101,110 @@ class NotionCLI < Thor
   end
 
   desc "query_database DATABASE_ID", "Query entries in a database"
-  method_option :limit, type: :numeric, default: 10, aliases: "-l", desc: "Maximum number of results"
+  method_option :limit, type: :numeric, default: 100, aliases: "-l", desc: "Maximum number of results"
+  method_option :cursor, type: :string, aliases: "-c", desc: "Pagination cursor from previous request"
+  method_option :page, type: :numeric, default: 1, aliases: "-p", desc: "Page number (for calculating item numbers)"
   def query_database(database_id)
-    entries = tool.query_database(database_id, page_size: options[:limit])
+    page_size = options[:limit]
+    start_cursor = options[:cursor]
+    page_num = options[:page]
+
+    result = tool.query_database(database_id, page_size: page_size, start_cursor: start_cursor)
+    entries = result[:entries]
 
     if entries && !entries.empty?
-      puts "🗃️  Found #{entries.count} entries:"
-      entries.each do |entry|
-        puts "   #{entry[:title]}"
-        puts "     ID: #{entry[:id]}"
-        puts "     URL: #{entry[:url]}"
-        puts "     Last edited: #{entry[:last_edited_time]}"
+      # Calculate starting index based on page number
+      start_index = (page_num - 1) * page_size
+
+      puts "🗃️  Found #{entries.count} entries (Page #{page_num}):"
+      entries.each_with_index do |entry, i|
+        puts "   #{start_index + i + 1}. #{entry[:title]}"
+        puts "      ID: #{entry[:id]}"
+        puts "      URL: #{entry[:url]}"
+        puts "      Last edited: #{entry[:last_edited_time]}"
         puts
+      end
+
+      if result[:has_more]
+        puts "📄 More entries available. To see next page, use:"
+        puts "   mcpz notion query_database #{database_id} --cursor '#{result[:next_cursor]}' --page #{page_num + 1}"
+      else
+        puts "📄 End of database entries"
       end
     else
       puts "🗃️  No entries found in database"
     end
   rescue RuntimeError => e
     warn "❌ Failed to query database: #{e.message}"
+    exit 1
+  end
+
+  desc "list_users", "List all users in the workspace"
+  method_option :limit, type: :numeric, default: 100, aliases: "-l", desc: "Maximum number of results"
+  method_option :cursor, type: :string, aliases: "-c", desc: "Pagination cursor from previous request"
+  method_option :page, type: :numeric, default: 1, aliases: "-p", desc: "Page number (for calculating item numbers)"
+  def list_users
+    page_size = options[:limit]
+    start_cursor = options[:cursor]
+    page_num = options[:page]
+
+    result = tool.list_users(page_size: page_size, start_cursor: start_cursor)
+    users = result[:users]
+
+    if users && !users.empty?
+      # Calculate starting index based on page number
+      start_index = (page_num - 1) * page_size
+
+      puts "👥 Found #{users.count} users (Page #{page_num}):"
+      users.each_with_index do |user, i|
+        puts "   #{start_index + i + 1}. #{user[:name] || "Unnamed"} (#{user[:type]})"
+        puts "      ID: #{user[:id]}"
+        puts "      Email: #{user[:email]}" if user[:email]
+        puts "      Avatar: #{user[:avatar_url]}" if user[:avatar_url]
+        puts
+      end
+
+      if result[:has_more]
+        puts "📄 More users available. To see next page, use:"
+        puts "   mcpz notion list_users --cursor '#{result[:next_cursor]}' --page #{page_num + 1}"
+      else
+        puts "📄 End of user list"
+      end
+    else
+      puts "👥 No users found"
+    end
+  rescue RuntimeError => e
+    warn "❌ Failed to list users: #{e.message}"
+    exit 1
+  end
+
+  desc "get_user USER_ID", "Get details of a specific user"
+  def get_user(user_id)
+    user = tool.get_user(user_id)
+
+    puts "👤 User Details:"
+    puts "   Name: #{user[:name] || "Unnamed"}"
+    puts "   Type: #{user[:type]}"
+    puts "   ID: #{user[:id]}"
+    puts "   Email: #{user[:email]}" if user[:email]
+    puts "   Avatar: #{user[:avatar_url]}" if user[:avatar_url]
+  rescue RuntimeError => e
+    warn "❌ Failed to get user: #{e.message}"
+    exit 1
+  end
+
+  desc "bot_info", "Get information about the integration bot user"
+  def bot_info
+    bot = tool.get_bot_user
+
+    puts "🤖 Bot User Details:"
+    puts "   Name: #{bot[:name] || "Unnamed"}"
+    puts "   Type: #{bot[:type]}"
+    puts "   ID: #{bot[:id]}"
+    puts "   Workspace: #{bot[:bot][:workspace_name]}" if bot[:bot][:workspace_name]
+    puts "   Owner: #{bot[:bot][:owner]}" if bot[:bot][:owner]
+  rescue RuntimeError => e
+    warn "❌ Failed to get bot info: #{e.message}"
     exit 1
   end
 

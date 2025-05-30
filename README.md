@@ -36,6 +36,11 @@ Find and manage Google Meet meetings from your calendar.
 - CLI: List meetings, search by content, get meeting URLs
 - MCP: AI assistant access to upcoming meetings and direct links
 
+### 📝 [Notion](./lib/utilities/notion/)
+Search pages and databases in your Notion workspace.
+- CLI: Search pages/databases, retrieve content, query database entries
+- MCP: AI assistant access to Notion workspace content and organization
+
 ## Quick Start
 
 ### 1. Configuration Setup
@@ -54,6 +59,9 @@ mcpz slack set_bot_token xoxb-your-slack-token
 
 # For Google services (Calendar, Drive, Meet)
 mcpz google auth
+
+# For Notion
+mcpz notion set_api_key secret_your-notion-integration-token
 ```
 
 Credentials are stored securely in `~/.config/mcpeasy/` (see individual server documentation for specific setup requirements).
@@ -74,6 +82,9 @@ mcpz gdrive search "quarterly report"
 
 # Google Meet
 mcpz gmeet upcoming
+
+# Notion
+mcpz notion search_pages "meeting notes"
 ```
 
 ### 3. MCP Server Configuration
@@ -98,6 +109,10 @@ For use with Claude Code, add servers to your `.mcp.json`:
     "gmeet": {
       "command": "mcpz",
       "args": ["gmeet", "mcp"]
+    },
+    "notion": {
+      "command": "mcpz",
+      "args": ["notion", "mcp"]
     }
   }
 }
@@ -141,7 +156,8 @@ lib/
     ├── slack/           # Slack integration
     ├── gcal/            # Google Calendar
     ├── gdrive/          # Google Drive  
-    └── gmeet/           # Google Meet
+    ├── gmeet/           # Google Meet
+    └── notion/          # Notion integration
 ```
 
 ### Contributing

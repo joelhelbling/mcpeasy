@@ -84,6 +84,25 @@ module Mcpeasy
     end
   end
 
+  # Load the existing NotionCLI and extend it with MCP functionality
+  require_relative "../utilities/notion/cli"
+
+  class NotionCommands < NotionCLI
+    namespace "notion"
+
+    desc "mcp", "Run Notion MCP server"
+    def mcp
+      require_relative "../utilities/notion/mcp"
+      MCPServer.new.run
+    end
+
+    desc "set_api_key API_KEY", "Set Notion API key"
+    def set_api_key(api_key)
+      Config.save_notion_api_key(api_key)
+      puts "✅ Notion API key saved successfully"
+    end
+  end
+
   class CLI < Thor
     desc "version", "Show mcpeasy version"
     def version
@@ -105,6 +124,7 @@ module Mcpeasy
       puts "🔑 Google credentials: #{status[:google_credentials] ? "✅" : "❌"}"
       puts "🎫 Google token: #{status[:google_token] ? "✅" : "❌"}"
       puts "💬 Slack config: #{status[:slack_config] ? "✅" : "❌"}"
+      puts "📝 Notion config: #{status[:notion_config] ? "✅" : "❌"}"
     end
 
     desc "set_google_credentials PATH", "Save Google credentials from downloaded JSON file"
@@ -142,6 +162,9 @@ module Mcpeasy
 
     desc "slack COMMAND", "Slack commands"
     subcommand "slack", SlackCommands
+
+    desc "notion COMMAND", "Notion commands"
+    subcommand "notion", NotionCommands
 
     class << self
       private

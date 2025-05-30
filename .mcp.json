@@ -35,6 +35,15 @@
         "mcp"
       ],
       "env": {}
+    },
+    "notion": {
+      "type": "stdio",
+      "command": "./bin/mcpz",
+      "args": [
+        "notion",
+        "mcp"
+      ],
+      "env": {}
     }
   }
 }

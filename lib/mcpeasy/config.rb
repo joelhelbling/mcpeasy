@@ -9,6 +9,7 @@ module Mcpeasy
     CONFIG_DIR = File.expand_path("~/.config/mcpeasy").freeze
     GOOGLE_DIR = File.join(CONFIG_DIR, "google").freeze
     SLACK_DIR = File.join(CONFIG_DIR, "slack").freeze
+    NOTION_DIR = File.join(CONFIG_DIR, "notion").freeze
     LOGS_DIR = File.expand_path("~/.local/share/mcpeasy/logs").freeze
 
     class << self
@@ -16,6 +17,7 @@ module Mcpeasy
         FileUtils.mkdir_p(CONFIG_DIR)
         FileUtils.mkdir_p(GOOGLE_DIR)
         FileUtils.mkdir_p(SLACK_DIR)
+        FileUtils.mkdir_p(NOTION_DIR)
         FileUtils.mkdir_p(LOGS_DIR)
       end
 
@@ -79,6 +81,24 @@ module Mcpeasy
         File.write(slack_token_path, JSON.pretty_generate(config))
       end
 
+      # Notion configuration
+      def notion_token_path
+        File.join(NOTION_DIR, "token.json")
+      end
+
+      def notion_api_key
+        return nil unless File.exist?(notion_token_path)
+        config = JSON.parse(File.read(notion_token_path))
+        config["api_key"]
+      end
+
+      def save_notion_api_key(api_key)
+        ensure_config_dirs
+        config = File.exist?(notion_token_path) ? JSON.parse(File.read(notion_token_path)) : {}
+        config["api_key"] = api_key
+        File.write(notion_token_path, JSON.pretty_generate(config))
+      end
+
       # Logs directory
       def logs_dir
         LOGS_DIR
@@ -94,7 +114,8 @@ module Mcpeasy
           logs_dir: LOGS_DIR,
           google_credentials: File.exist?(google_credentials_path),
           google_token: File.exist?(google_token_path),
-          slack_config: File.exist?(slack_token_path)
+          slack_config: File.exist?(slack_token_path),
+          notion_config: File.exist?(notion_token_path)
         }
       end
     end

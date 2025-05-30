@@ -14,6 +14,7 @@ module Mcpeasy
       puts "Created #{Config::CONFIG_DIR}"
       puts "Created #{Config::GOOGLE_DIR}"
       puts "Created #{Config::SLACK_DIR}"
+      puts "Created #{Config::NOTION_DIR}"
       puts "Created #{Config::LOGS_DIR}"
 
       puts "mcpeasy setup complete!"

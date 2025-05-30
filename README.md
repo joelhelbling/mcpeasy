@@ -40,7 +40,13 @@ Find and manage Google Meet meetings from your calendar.
 
 ### 1. Configuration Setup
 
-Configure your API credentials for each service you plan to use:
+First, create the configuration directories:
+
+```bash
+mcpz setup
+```
+
+Then configure your API credentials for each service you plan to use:
 
 ```bash
 # For Slack

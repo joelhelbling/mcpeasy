@@ -1,26 +1,21 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "config"
 
 module Mcpeasy
   class Setup
-    CONFIG_DIR = File.expand_path("~/.config/mcpeasy")
-    SUBDIRS = %w[google slack].freeze
-
     def self.create_config_directories
       puts "Setting up mcpeasy configuration directories..."
-      
-      # Create main config directory
-      FileUtils.mkdir_p(CONFIG_DIR)
-      puts "Created #{CONFIG_DIR}"
-      
-      # Create subdirectories
-      SUBDIRS.each do |subdir|
-        dir_path = File.join(CONFIG_DIR, subdir)
-        FileUtils.mkdir_p(dir_path)
-        puts "Created #{dir_path}"
-      end
-      
+
+      # Use Config class to create all directories including logs
+      Config.ensure_config_dirs
+
+      puts "Created #{Config::CONFIG_DIR}"
+      puts "Created #{Config::GOOGLE_DIR}"
+      puts "Created #{Config::SLACK_DIR}"
+      puts "Created #{Config::LOGS_DIR}"
+
       puts "mcpeasy setup complete!"
     end
   end

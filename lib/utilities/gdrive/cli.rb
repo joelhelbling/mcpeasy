@@ -116,4 +116,3 @@ class GdriveCLI < Thor
     "#{size.round(1)} #{units[unit_index]}"
   end
 end
-

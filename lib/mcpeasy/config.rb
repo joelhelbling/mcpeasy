@@ -9,12 +9,14 @@ module Mcpeasy
     CONFIG_DIR = File.expand_path("~/.config/mcpeasy").freeze
     GOOGLE_DIR = File.join(CONFIG_DIR, "google").freeze
     SLACK_DIR = File.join(CONFIG_DIR, "slack").freeze
+    LOGS_DIR = File.expand_path("~/.local/share/mcpeasy/logs").freeze
 
     class << self
       def ensure_config_dirs
         FileUtils.mkdir_p(CONFIG_DIR)
         FileUtils.mkdir_p(GOOGLE_DIR)
         FileUtils.mkdir_p(SLACK_DIR)
+        FileUtils.mkdir_p(LOGS_DIR)
       end
 
       # Google credentials management
@@ -77,10 +79,19 @@ module Mcpeasy
         File.write(slack_token_path, JSON.pretty_generate(config))
       end
 
+      # Logs directory
+      def logs_dir
+        LOGS_DIR
+      end
+
+      def log_file_path(service, type = "error")
+        File.join(LOGS_DIR, "mcp_#{service}_#{type}.log")
+      end
 
       def config_status
         {
           config_dir: CONFIG_DIR,
+          logs_dir: LOGS_DIR,
           google_credentials: File.exist?(google_credentials_path),
           google_token: File.exist?(google_token_path),
           slack_config: File.exist?(slack_token_path)

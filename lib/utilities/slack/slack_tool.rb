@@ -61,7 +61,8 @@ class SlackTool
         raise "Slack API Error: #{e.message}"
       end
     rescue => e
-      File.write("./logs/mcp_slack_error.log", "#{Time.now}: SlackTool error: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
+      Mcpeasy::Config.ensure_config_dirs
+      File.write(Mcpeasy::Config.log_file_path("slack", "error"), "#{Time.now}: SlackTool error: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
       raise e
     end
   end

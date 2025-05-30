@@ -155,4 +155,3 @@ class GmeetCLI < Thor
     end
   end
 end
-

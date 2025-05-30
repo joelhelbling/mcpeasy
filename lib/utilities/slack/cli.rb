@@ -72,4 +72,3 @@ class SlackCLI < Thor
     @tool ||= SlackTool.new
   end
 end
-

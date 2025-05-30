@@ -71,7 +71,8 @@ class MCPServer
     $stdout.sync = true
 
     # Log startup to file instead of stdout to avoid protocol interference
-    File.write("./logs/mcp_gdrive_startup.log", "#{Time.now}: Google Drive MCP Server starting on stdio\n", mode: "a")
+    Mcpeasy::Config.ensure_config_dirs
+    File.write(Mcpeasy::Config.log_file_path("gdrive", "startup"), "#{Time.now}: Google Drive MCP Server starting on stdio\n", mode: "a")
     while (line = $stdin.gets)
       handle_request(line.strip)
     end
@@ -79,7 +80,7 @@ class MCPServer
     # Silent shutdown
   rescue => e
     # Log to a file instead of stderr to avoid protocol interference
-    File.write("./logs/mcp_gdrive_error.log", "#{Time.now}: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
+    File.write(Mcpeasy::Config.log_file_path("gdrive", "error"), "#{Time.now}: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
   end
 
   private
@@ -107,7 +108,7 @@ class MCPServer
       puts JSON.generate(error_response)
       $stdout.flush
     rescue => e
-      File.write("./logs/mcp_gdrive_error.log", "#{Time.now}: Error handling request: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
+      File.write(Mcpeasy::Config.log_file_path("gdrive", "error"), "#{Time.now}: Error handling request: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
       error_response = {
         jsonrpc: "2.0",
         id: request&.dig("id"),
@@ -209,7 +210,7 @@ class MCPServer
         }
       }
     rescue => e
-      File.write("./logs/mcp_gdrive_error.log", "#{Time.now}: Tool error: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
+      File.write(Mcpeasy::Config.log_file_path("gdrive", "error"), "#{Time.now}: Tool error: #{e.message}\n#{e.backtrace.join("\n")}\n", mode: "a")
       {
         jsonrpc: "2.0",
         id: id,

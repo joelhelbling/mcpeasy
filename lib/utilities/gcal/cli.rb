@@ -5,7 +5,6 @@ require "thor"
 require_relative "gcal_tool"
 
 class GcalCLI < Thor
-
   desc "test", "Test the Google Calendar API connection"
   def test
     response = tool.test_connection
@@ -133,4 +132,3 @@ class GcalCLI < Thor
     end
   end
 end
-

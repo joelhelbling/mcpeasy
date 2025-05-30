@@ -22,10 +22,10 @@ module Mcpeasy
 
   # Load the existing GcalCLI and extend it with MCP functionality
   require_relative "../utilities/gcal/cli"
-  
+
   class GcalCommands < GcalCLI
     namespace "gcal"
-    
+
     desc "mcp", "Run Google Calendar MCP server"
     def mcp
       require_relative "../utilities/gcal/mcp"
@@ -35,10 +35,10 @@ module Mcpeasy
 
   # Load the existing GdriveCLI and extend it with MCP functionality
   require_relative "../utilities/gdrive/cli"
-  
+
   class GdriveCommands < GdriveCLI
     namespace "gdrive"
-    
+
     desc "mcp", "Run Google Drive MCP server"
     def mcp
       require_relative "../utilities/gdrive/mcp"
@@ -48,10 +48,10 @@ module Mcpeasy
 
   # Load the existing GmeetCLI and extend it with MCP functionality
   require_relative "../utilities/gmeet/cli"
-  
+
   class GmeetCommands < GmeetCLI
     namespace "gmeet"
-    
+
     desc "mcp", "Run Google Meet MCP server"
     def mcp
       require_relative "../utilities/gmeet/mcp"
@@ -61,10 +61,10 @@ module Mcpeasy
 
   # Load the existing SlackCLI and extend it with MCP functionality
   require_relative "../utilities/slack/cli"
-  
+
   class SlackCommands < SlackCLI
     namespace "slack"
-    
+
     desc "mcp", "Run Slack MCP server"
     def mcp
       require_relative "../utilities/slack/mcp"
@@ -78,7 +78,7 @@ module Mcpeasy
     end
 
     # Alias the inherited 'list' command as 'channels' for consistency
-    desc "channels", "List Slack channels"  
+    desc "channels", "List Slack channels"
     def channels
       list
     end
@@ -101,9 +101,10 @@ module Mcpeasy
     def config
       status = Config.config_status
       puts "📁 Config directory: #{status[:config_dir]}"
-      puts "🔑 Google credentials: #{status[:google_credentials] ? '✅' : '❌'}"
-      puts "🎫 Google token: #{status[:google_token] ? '✅' : '❌'}"
-      puts "💬 Slack config: #{status[:slack_config] ? '✅' : '❌'}"
+      puts "📄 Logs directory: #{status[:logs_dir]}"
+      puts "🔑 Google credentials: #{status[:google_credentials] ? "✅" : "❌"}"
+      puts "🎫 Google token: #{status[:google_token] ? "✅" : "❌"}"
+      puts "💬 Slack config: #{status[:slack_config] ? "✅" : "❌"}"
     end
 
     desc "set_google_credentials PATH", "Save Google credentials from downloaded JSON file"
@@ -142,10 +143,12 @@ module Mcpeasy
     desc "slack COMMAND", "Slack commands"
     subcommand "slack", SlackCommands
 
-    private
+    class << self
+      private
 
-    def self.exit_on_failure?
-      true
+      def exit_on_failure?
+        true
+      end
     end
   end
 end

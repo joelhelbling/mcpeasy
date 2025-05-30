@@ -298,9 +298,9 @@ class GcalTool
   end
 
   def log_error(method, error)
-    FileUtils.mkdir_p("./logs")
+    Mcpeasy::Config.ensure_config_dirs
     File.write(
-      "./logs/mcp_gcal_error.log",
+      Mcpeasy::Config.log_file_path("gcal", "error"),
       "#{Time.now}: #{method} error: #{error.class}: #{error.message}\n#{error.backtrace.join("\n")}\n",
       mode: "a"
     )

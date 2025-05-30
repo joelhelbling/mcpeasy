@@ -42,9 +42,6 @@ Gem::Specification.new do |spec|
   # Development dependencies
   spec.add_development_dependency "standard", "~> 1.50"
 
-  # Post-install message and setup
-  spec.post_install_message = "Setting up mcpeasy configuration directories..."
-
-  # Run setup after installation
-  spec.extensions = ["ext/setup.rb"]
+  # Post-install message
+  spec.post_install_message = "mcpeasy installed! Run 'mcpz setup' to configure."
 end

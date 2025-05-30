@@ -1,4 +1,4 @@
-# MCPEasy
+# MCPeasy
 
 A Ruby gem that provides multiple Model Context Protocol (MCP) servers for integrating with AI assistants like Claude Code. Each MCP server provides programmatic access to popular web services and APIs.
 

@@ -67,16 +67,29 @@ class SlackTool
     end
   end
 
-  def list_channels
-    response = @client.conversations_list(types: "public_channel,private_channel")
+  def list_channels(limit: 100, cursor: nil, exclude_archived: true)
+    params = {
+      types: "public_channel,private_channel",
+      limit: [limit.to_i, 1000].min,
+      exclude_archived: exclude_archived
+    }
+    params[:cursor] = cursor if cursor && !cursor.to_s.strip.empty?
+
+    response = @client.conversations_list(params)
 
     if response["ok"]
-      response["channels"].to_a.map do |channel|
+      channels = response["channels"].to_a.map do |channel|
         {
           name: channel["name"],
           id: channel["id"]
         }
       end
+
+      {
+        channels: channels,
+        has_more: response.dig("response_metadata", "next_cursor") ? true : false,
+        next_cursor: response.dig("response_metadata", "next_cursor")
+      }
     else
       raise "Failed to list channels: #{response["error"]}"
     end

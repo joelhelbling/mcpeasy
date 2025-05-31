@@ -21,10 +21,23 @@ class MCPServer
       },
       "list_channels" => {
         name: "list_channels",
-        description: "List available Slack channels",
+        description: "List available Slack channels. When asked to list ALL channels, automatically retrieve all pages by calling this tool multiple times with the cursor parameter to get complete results.",
         inputSchema: {
           type: "object",
-          properties: {},
+          properties: {
+            limit: {
+              type: "number",
+              description: "Maximum number of channels to return (default: 100, max: 1000)"
+            },
+            cursor: {
+              type: "string",
+              description: "Cursor for pagination. Use the next_cursor from previous response to get next page"
+            },
+            exclude_archived: {
+              type: "boolean",
+              description: "Exclude archived channels from results (default: true)"
+            }
+          },
           required: []
         }
       },
@@ -226,7 +239,7 @@ class MCPServer
     when "test_connection"
       test_connection
     when "list_channels"
-      list_channels
+      list_channels(arguments)
     when "post_message"
       post_message(arguments)
     else
@@ -243,11 +256,47 @@ class MCPServer
     end
   end
 
-  def list_channels
-    channels = @slack_tool.list_channels
-    output = "📋 #{channels.count} Available channels: "
-    output << channels.map { |c| "##{c[:name]} (ID: #{c[:id]})" }.join(", ")
-    output
+  def list_channels(arguments)
+    limit = [arguments["limit"]&.to_i || 100, 1000].min
+    cursor = arguments["cursor"]&.to_s
+    exclude_archived = arguments.key?("exclude_archived") ? arguments["exclude_archived"] : true
+
+    # Keep track of current page for display
+    @list_channels_page ||= {}
+    page_key = cursor || "first"
+    @list_channels_page[page_key] ||= 0
+    @list_channels_page[page_key] = cursor ? @list_channels_page[page_key] + 1 : 1
+
+    result = @slack_tool.list_channels(limit: limit, cursor: cursor&.empty? ? nil : cursor, exclude_archived: exclude_archived)
+    channels = result[:channels]
+
+    # Calculate record range
+    page_num = @list_channels_page[page_key]
+    start_index = (page_num - 1) * limit
+    end_index = start_index + channels.count - 1
+
+    channels_list = channels.map.with_index do |channel, i|
+      "##{channel[:name]} (ID: #{channel[:id]})"
+    end.join(", ")
+
+    pagination_info = if result[:has_more]
+      <<~INFO
+
+        📄 **Page #{page_num}** | Showing channels #{start_index + 1}-#{end_index + 1}
+        _More channels available. Use `cursor: "#{result[:next_cursor]}"` to get the next page._
+      INFO
+    else
+      # Try to estimate total if we're on last page
+      estimated_total = start_index + channels.count
+      <<~INFO
+
+        📄 **Page #{page_num}** | Showing channels #{start_index + 1}-#{end_index + 1} of #{estimated_total} total
+      INFO
+    end
+
+    <<~OUTPUT
+      📋 #{channels.count} Available channels: #{channels_list}#{pagination_info}
+    OUTPUT
   end
 
   def post_message(arguments)

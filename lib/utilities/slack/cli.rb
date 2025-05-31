@@ -22,12 +22,25 @@ class SlackCLI < Thor
   end
 
   desc "list", "List available Slack channels"
+  method_option :limit, type: :numeric, default: 1000, desc: "Maximum number of channels to retrieve"
+  method_option :include_archived, type: :boolean, default: false, desc: "Include archived channels in results"
   def list
-    channels = tool.list_channels
+    all_channels = []
+    cursor = nil
+    limit = options[:limit]
+    exclude_archived = !options[:include_archived]
 
-    if channels && !channels.empty?
-      puts "📋 Available channels:"
-      channels.each do |channel|
+    loop do
+      result = tool.list_channels(limit: limit, cursor: cursor, exclude_archived: exclude_archived)
+      all_channels.concat(result[:channels])
+
+      break unless result[:has_more] && all_channels.count < limit
+      cursor = result[:next_cursor]
+    end
+
+    if all_channels && !all_channels.empty?
+      puts "📋 Available channels (#{all_channels.count} total):"
+      all_channels.each do |channel|
         puts "   ##{channel[:name]} (ID: #{channel[:id]})"
       end
     end

@@ -2,9 +2,5 @@
 .env
 .claude/settings.local.json
 .mcp.local.json
-logs/*
-client_secret_*.apps.googleusercontent.com.json
-google_credentials.json
-.google-token.json
 *.gem
 Gemfile.lock

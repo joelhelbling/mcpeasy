@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Important Reminders
 
-**Date/Time Accuracy**: The environment context date provided at startup may be incorrect. Always verify the current date and time using the `date` command when needed.
+**Date/Time Accuracy**: The environment context date provided at startup may be incorrect. Always verify the current date and time using the `date` command when needed. Also watch out for time/date terms which are relative to today's date, e.g. "tomorrow", "this week" or "the next 48 hours".
 
 ## Project Overview
 

@@ -175,14 +175,14 @@ The server provides these tools to Claude Code:
 lib/utilities/slack/
 ├── cli.rb          # Thor-based CLI interface
 ├── mcp.rb          # MCP server implementation  
-├── slack_tool.rb   # Slack Web API wrapper
+├── service.rb      # Slack Web API wrapper
 └── README.md       # This file
 ```
 
 ### Adding New Features
 
-1. **New API methods**: Add to `SlackTool` class
-2. **New CLI commands**: Add to `SlackCLI` class  
+1. **New API methods**: Add to `Service` class
+2. **New CLI commands**: Add to `CLI` class  
 3. **New MCP tools**: Add to `MCPServer` class
 
 ### Testing

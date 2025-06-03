@@ -128,6 +128,14 @@ The server provides these tools to Claude Code:
 - **list_calendars**: List available calendars
 - **search_events**: Search for events by text content
 
+The server also provides helpful prompts for common calendar queries:
+
+- **check_schedule**: Check your calendar schedule for a specific time period
+- **find_meeting**: Find a specific meeting or event by searching for keywords
+- **check_availability**: Check if you're free at a specific time
+- **weekly_overview**: Get an overview of your schedule for the upcoming week
+- **meeting_conflicts**: Check for any overlapping or back-to-back meetings
+
 ## Security & Permissions
 
 ### Required OAuth Scopes
@@ -201,14 +209,14 @@ tail -f logs/mcp_gcal_startup.log
 utilities/gcal/
 ├── cli.rb          # Thor-based CLI interface
 ├── mcp.rb          # MCP server implementation  
-├── gcal_tool.rb    # Google Calendar API wrapper
+├── service.rb      # Google Calendar API wrapper
 └── README.md       # This file
 ```
 
 ### Adding New Features
 
-1. **New API methods**: Add to `GcalTool` class
-2. **New CLI commands**: Add to `GcalCLI` class  
+1. **New API methods**: Add to `Service` class
+2. **New CLI commands**: Add to `CLI` class  
 3. **New MCP tools**: Add to `MCPServer` class
 
 ### Testing

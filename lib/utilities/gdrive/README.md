@@ -233,14 +233,14 @@ tail -f logs/mcp_gdrive_startup.log
 utilities/gdrive/
 ├── cli.rb          # Thor-based CLI interface
 ├── mcp.rb          # MCP server implementation  
-├── gdrive_tool.rb  # Google Drive API wrapper
+├── service.rb      # Google Drive API wrapper
 └── README.md       # This file
 ```
 
 ### Adding New Features
 
-1. **New API methods**: Add to `GdriveTool` class
-2. **New CLI commands**: Add to `GdriveCLI` class  
+1. **New API methods**: Add to `Service` class
+2. **New CLI commands**: Add to `CLI` class  
 3. **New MCP tools**: Add to `MCPServer` class
 
 ### Testing

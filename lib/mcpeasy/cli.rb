@@ -7,8 +7,8 @@ module Mcpeasy
   class GoogleCommands < Thor
     desc "auth", "Authenticate with Google services (Calendar, Drive, Meet)"
     def auth
-      require_relative "../utilities/gcal/gcal_tool"
-      tool = GcalTool.new(skip_auth: true)
+      require_relative "../utilities/gcal/service"
+      tool = Gcal::Service.new(skip_auth: true)
       result = tool.authenticate
       if result[:success]
         puts "✅ Successfully authenticated with Google services"
@@ -23,52 +23,52 @@ module Mcpeasy
   # Load the existing GcalCLI and extend it with MCP functionality
   require_relative "../utilities/gcal/cli"
 
-  class GcalCommands < GcalCLI
+  class GcalCommands < Gcal::CLI
     namespace "gcal"
 
     desc "mcp", "Run Google Calendar MCP server"
     def mcp
       require_relative "../utilities/gcal/mcp"
-      MCPServer.new.run
+      Gcal::MCPServer.new.run
     end
   end
 
   # Load the existing GdriveCLI and extend it with MCP functionality
   require_relative "../utilities/gdrive/cli"
 
-  class GdriveCommands < GdriveCLI
+  class GdriveCommands < Gdrive::CLI
     namespace "gdrive"
 
     desc "mcp", "Run Google Drive MCP server"
     def mcp
       require_relative "../utilities/gdrive/mcp"
-      MCPServer.new.run
+      Gdrive::MCPServer.new.run
     end
   end
 
   # Load the existing GmeetCLI and extend it with MCP functionality
   require_relative "../utilities/gmeet/cli"
 
-  class GmeetCommands < GmeetCLI
+  class GmeetCommands < Gmeet::CLI
     namespace "gmeet"
 
     desc "mcp", "Run Google Meet MCP server"
     def mcp
       require_relative "../utilities/gmeet/mcp"
-      MCPServer.new.run
+      Gmeet::MCPServer.new.run
     end
   end
 
   # Load the existing SlackCLI and extend it with MCP functionality
   require_relative "../utilities/slack/cli"
 
-  class SlackCommands < SlackCLI
+  class SlackCommands < Slack::CLI
     namespace "slack"
 
     desc "mcp", "Run Slack MCP server"
     def mcp
       require_relative "../utilities/slack/mcp"
-      MCPServer.new.run
+      Slack::MCPServer.new.run
     end
 
     desc "set_bot_token TOKEN", "Set Slack bot token"
@@ -87,13 +87,13 @@ module Mcpeasy
   # Load the existing NotionCLI and extend it with MCP functionality
   require_relative "../utilities/notion/cli"
 
-  class NotionCommands < NotionCLI
+  class NotionCommands < Notion::CLI
     namespace "notion"
 
     desc "mcp", "Run Notion MCP server"
     def mcp
       require_relative "../utilities/notion/mcp"
-      MCPServer.new.run
+      Notion::MCPServer.new.run
     end
 
     desc "set_api_key API_KEY", "Set Notion API key"

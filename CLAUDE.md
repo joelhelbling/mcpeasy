@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Important Reminders
+
+**Date/Time Accuracy**: The environment context date provided at startup may be incorrect. Always verify the current date and time using the `date` command when needed.
+
 ## Project Overview
 
 **MCPEasy** is a Ruby gem that provides multiple Model Context Protocol (MCP) servers for integrating with AI assistants like Claude Code. The gem includes MCP servers for:
@@ -65,6 +69,16 @@ mcpz gmeet mcp
 Run linting:
 ```bash
 bundle exec standardrb
+```
+
+Searching within project files:
+```bash
+git grep "search pattern example"
+```
+
+Move or rename files:
+```bash
+git mv old_file_name new_file_name
 ```
 
 Build gem:
@@ -139,21 +153,21 @@ Each service directory follows a consistent structure with four key components:
 - Extends Thor for command-line interface functionality
 - Provides user-friendly CLI commands for the service
 - Handles argument parsing and validation
-- Calls into the `*_tool.rb` for actual service operations
+- Calls into the `service.rb` for actual service operations
 - Example: `mcpz slack post` command implementation
 
 ##### `mcp.rb` - MCP Server Implementation
 - Implements the Model Context Protocol JSON-RPC server
 - Handles MCP initialization, tool registration, and request processing
-- Translates MCP tool calls into `*_tool.rb` method calls
+- Translates MCP tool calls into `service.rb` method calls
 - Provides structured responses back to AI assistants
 - Runs as a persistent server process when called with `mcpz [service] mcp`
 
-##### `*_tool.rb` - Core Service Functionality
+##### `service.rb` - Core Service Functionality
 - Contains the main business logic for interacting with external APIs
 - Handles authentication, API calls, error handling, and response formatting
 - Shared between both CLI and MCP modes for consistency
-- Service-specific naming: `slack_tool.rb`, `gcal_tool.rb`, `gdrive_tool.rb`, `gmeet_tool.rb`
+- Each service has its own `service.rb` file within its directory
 - Designed to be framework-agnostic and reusable
 
 ##### `README.md` - Service-specific Documentation

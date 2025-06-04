@@ -103,6 +103,32 @@ module Mcpeasy
     end
   end
 
+  # Load the existing GmailCLI and extend it with MCP functionality
+  require_relative "../utilities/gmail/cli"
+
+  class GmailCommands < Gmail::CLI
+    namespace "gmail"
+
+    desc "mcp", "Run Gmail MCP server"
+    def mcp
+      require_relative "../utilities/gmail/mcp"
+      Gmail::MCPServer.new.run
+    end
+
+    desc "auth", "Authenticate with Gmail API"
+    def auth
+      require_relative "../utilities/gmail/service"
+      tool = Gmail::Service.new(skip_auth: true)
+      result = tool.authenticate
+      if result[:success]
+        puts "✅ Successfully authenticated with Gmail"
+      else
+        puts "❌ Authentication failed: #{result[:error]}"
+        exit 1
+      end
+    end
+  end
+
   class CLI < Thor
     desc "version", "Show mcpeasy version"
     def version
@@ -165,6 +191,9 @@ module Mcpeasy
 
     desc "notion COMMAND", "Notion commands"
     subcommand "notion", NotionCommands
+
+    desc "gmail COMMAND", "Gmail commands"
+    subcommand "gmail", GmailCommands
 
     class << self
       private

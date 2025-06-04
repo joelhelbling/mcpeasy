@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["joel@joelhelbling.com"]
 
   spec.summary = "MCP servers made easy"
-  spec.description = "mcpeasy, LM squeezy - Easy-to-use MCP servers for Google Calendar, Google Drive, Google Meet, and Slack"
+  spec.description = "mcpeasy, LM squeezy - Easy-to-use MCP servers for Gmail, Google Calendar, Google Drive, Google Meet, and Slack"
   spec.homepage = "https://github.com/joelhelbling/mcpeasy"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
@@ -33,7 +33,12 @@ Gem::Specification.new do |spec|
   # Dependencies
   spec.add_dependency "google-apis-calendar_v3", "~> 0.35"
   spec.add_dependency "google-apis-drive_v3", "~> 0.45"
+  spec.add_dependency "google-apis-gmail_v1", "~> 0.40"
   spec.add_dependency "googleauth", "~> 1.8"
+  spec.add_dependency "html2text", "~> 0.2"
+  spec.add_dependency "mail", "~> 2.8"
+  spec.add_dependency "nokogiri", "~> 1.15"
+  spec.add_dependency "signet", "~> 0.19"
   spec.add_dependency "slack-ruby-client", "~> 2.1"
   spec.add_dependency "webrick", "~> 1.8"
   spec.add_dependency "thor", "~> 1.3"

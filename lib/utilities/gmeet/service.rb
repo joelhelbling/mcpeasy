@@ -22,7 +22,8 @@ module Gmeet
 
     def list_meetings(start_date: nil, end_date: nil, max_results: 20, calendar_id: "primary")
       # Default to today if no start date provided
-      start_time = start_date ? Time.parse("#{start_date} 00:00:00") : Time.now.beginning_of_day
+      now = Time.now
+      start_time = start_date ? Time.parse("#{start_date} 00:00:00") : Time.new(now.year, now.month, now.day, 0, 0, 0)
       # Default to 7 days from start if no end date provided
       end_time = end_date ? Time.parse("#{end_date} 23:59:59") : start_time + 7 * 24 * 60 * 60
 
@@ -110,7 +111,8 @@ module Gmeet
 
     def search_meetings(query, start_date: nil, end_date: nil, max_results: 10)
       # Default to today if no start date provided
-      start_time = start_date ? Time.parse("#{start_date} 00:00:00") : Time.now.beginning_of_day
+      now = Time.now
+      start_time = start_date ? Time.parse("#{start_date} 00:00:00") : Time.new(now.year, now.month, now.day, 0, 0, 0)
       # Default to 30 days from start if no end date provided
       end_time = end_date ? Time.parse("#{end_date} 23:59:59") : start_time + 30 * 24 * 60 * 60
 

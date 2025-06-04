@@ -27,6 +27,15 @@
       ],
       "env": {}
     },
+    "gmail": {
+      "type": "stdio",
+      "command": "./bin/mcpz",
+      "args": [
+        "gmail",
+        "mcp"
+      ],
+      "env": {}
+    },
     "gmeet": {
       "type": "stdio",
       "command": "./bin/mcpz",

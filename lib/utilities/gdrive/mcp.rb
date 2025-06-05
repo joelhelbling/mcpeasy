@@ -8,6 +8,68 @@ require_relative "service"
 module Gdrive
   class MCPServer
     def initialize
+      @prompts = [
+        {
+          name: "find_document",
+          description: "Find a specific document or file in Google Drive",
+          arguments: [
+            {
+              name: "search_terms",
+              description: "Keywords to search for in file names and content (e.g., 'quarterly report', 'budget 2024')",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "open_file",
+          description: "Open and read the contents of a file from Google Drive",
+          arguments: [
+            {
+              name: "file_identifier",
+              description: "File name, ID, or search terms to identify the file",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "browse_recent_files",
+          description: "See your recently modified files in Google Drive",
+          arguments: [
+            {
+              name: "count",
+              description: "Number of recent files to show (default: 10)",
+              required: false
+            }
+          ]
+        },
+        {
+          name: "search_by_type",
+          description: "Find files of a specific type in Google Drive",
+          arguments: [
+            {
+              name: "file_type",
+              description: "Type of files to search for (e.g., 'spreadsheet', 'presentation', 'PDF', 'document')",
+              required: true
+            },
+            {
+              name: "keywords",
+              description: "Optional keywords to refine the search",
+              required: false
+            }
+          ]
+        },
+        {
+          name: "get_project_files",
+          description: "Find all files related to a specific project or topic",
+          arguments: [
+            {
+              name: "project_name",
+              description: "Name or keywords related to the project",
+              required: true
+            }
+          ]
+        }
+      ]
       @tools = {
         "test_connection" => {
           name: "test_connection",
@@ -139,6 +201,10 @@ module Gdrive
         tools_list_response(id, params)
       when "tools/call"
         tools_call_response(id, params)
+      when "prompts/list"
+        prompts_list_response(id, params)
+      when "prompts/get"
+        prompts_get_response(id, params)
       else
         {
           jsonrpc: "2.0",
@@ -159,7 +225,8 @@ module Gdrive
         result: {
           protocolVersion: "2024-11-05",
           capabilities: {
-            tools: {}
+            tools: {},
+            prompts: {}
           },
           serverInfo: {
             name: "gdrive-mcp-server",
@@ -226,6 +293,107 @@ module Gdrive
           }
         }
       end
+    end
+
+    def prompts_list_response(id, params)
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          prompts: @prompts
+        }
+      }
+    end
+
+    def prompts_get_response(id, params)
+      prompt_name = params["name"]
+      prompt = @prompts.find { |p| p[:name] == prompt_name }
+
+      unless prompt
+        return {
+          jsonrpc: "2.0",
+          id: id,
+          error: {
+            code: -32602,
+            message: "Unknown prompt",
+            data: "Prompt '#{prompt_name}' not found"
+          }
+        }
+      end
+
+      # Generate messages based on the prompt
+      messages = case prompt_name
+      when "find_document"
+        search_terms = params["arguments"]&.dig("search_terms") || "quarterly report"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find documents in Google Drive containing: #{search_terms}"
+            }
+          }
+        ]
+      when "open_file"
+        file_identifier = params["arguments"]&.dig("file_identifier") || "project_plan.docx"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Open and show me the contents of: #{file_identifier}"
+            }
+          }
+        ]
+      when "browse_recent_files"
+        count = params["arguments"]&.dig("count") || "10"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Show me my #{count} most recently modified files in Google Drive"
+            }
+          }
+        ]
+      when "search_by_type"
+        file_type = params["arguments"]&.dig("file_type") || "spreadsheet"
+        keywords = params["arguments"]&.dig("keywords")
+        search_text = (keywords.nil? || keywords.empty?) ?
+          "Find all #{file_type} files in Google Drive" :
+          "Find #{file_type} files in Google Drive containing: #{keywords}"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: search_text
+            }
+          }
+        ]
+      when "get_project_files"
+        project_name = params["arguments"]&.dig("project_name") || "website redesign"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find all files related to project: #{project_name}"
+            }
+          }
+        ]
+      else
+        []
+      end
+
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          description: prompt[:description],
+          messages: messages
+        }
+      }
     end
 
     def call_tool(tool_name, arguments)

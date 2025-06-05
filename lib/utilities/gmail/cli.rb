@@ -99,7 +99,7 @@ module Gmail
         email = tool.get_raw_message(email_id)
         return
       end
-      
+
       email = tool.get_email_content(email_id)
 
       puts "📧 Email Details:"

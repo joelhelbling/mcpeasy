@@ -10,6 +10,84 @@ module Notion
     def initialize
       # Defer Service initialization until actually needed
       @notion_tool = nil
+      @prompts = [
+        {
+          name: "find_page",
+          description: "Find a specific page or document in Notion",
+          arguments: [
+            {
+              name: "search_terms",
+              description: "Keywords to search for in page titles and content",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "open_page",
+          description: "Open and read the contents of a Notion page",
+          arguments: [
+            {
+              name: "page_identifier",
+              description: "Page title, ID, or keywords to identify the page",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "browse_database",
+          description: "Browse entries in a Notion database",
+          arguments: [
+            {
+              name: "database_name",
+              description: "Name or keywords to identify the database",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "find_notes",
+          description: "Search for notes or documentation on a specific topic",
+          arguments: [
+            {
+              name: "topic",
+              description: "Topic or subject to search for in notes",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "project_info",
+          description: "Find information about a specific project",
+          arguments: [
+            {
+              name: "project_name",
+              description: "Name or keywords related to the project",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "team_pages",
+          description: "Find pages or content related to team members",
+          arguments: [
+            {
+              name: "team_or_person",
+              description: "Team name or person's name to find related content",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "recent_updates",
+          description: "See recently updated pages and content in Notion",
+          arguments: []
+        },
+        {
+          name: "workspace_overview",
+          description: "Get an overview of the Notion workspace structure",
+          arguments: []
+        }
+      ]
       @tools = {
         "test_connection" => {
           name: "test_connection",
@@ -222,6 +300,10 @@ module Notion
         tools_list_response(id, params)
       when "tools/call"
         tools_call_response(id, params)
+      when "prompts/list"
+        prompts_list_response(id, params)
+      when "prompts/get"
+        prompts_get_response(id, params)
       else
         {
           jsonrpc: "2.0",
@@ -242,7 +324,8 @@ module Notion
         result: {
           protocolVersion: "2024-11-05",
           capabilities: {
-            tools: {}
+            tools: {},
+            prompts: {}
           },
           serverInfo: {
             name: "notion-mcp-server",
@@ -309,6 +392,134 @@ module Notion
           }
         }
       end
+    end
+
+    def prompts_list_response(id, params)
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          prompts: @prompts
+        }
+      }
+    end
+
+    def prompts_get_response(id, params)
+      prompt_name = params["name"]
+      prompt = @prompts.find { |p| p[:name] == prompt_name }
+
+      unless prompt
+        return {
+          jsonrpc: "2.0",
+          id: id,
+          error: {
+            code: -32602,
+            message: "Unknown prompt",
+            data: "Prompt '#{prompt_name}' not found"
+          }
+        }
+      end
+
+      # Generate messages based on the prompt
+      messages = case prompt_name
+      when "find_page"
+        search_terms = params["arguments"]&.dig("search_terms") || "project documentation"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find Notion pages containing: #{search_terms}"
+            }
+          }
+        ]
+      when "open_page"
+        page_identifier = params["arguments"]&.dig("page_identifier") || "meeting notes"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Open and show me the content of Notion page: #{page_identifier}"
+            }
+          }
+        ]
+      when "browse_database"
+        database_name = params["arguments"]&.dig("database_name") || "project tracker"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Browse entries in Notion database: #{database_name}"
+            }
+          }
+        ]
+      when "find_notes"
+        topic = params["arguments"]&.dig("topic") || "API documentation"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find notes and documentation about: #{topic}"
+            }
+          }
+        ]
+      when "project_info"
+        project_name = params["arguments"]&.dig("project_name") || "website redesign"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find information about project: #{project_name}"
+            }
+          }
+        ]
+      when "team_pages"
+        team_or_person = params["arguments"]&.dig("team_or_person") || "engineering team"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find Notion pages related to: #{team_or_person}"
+            }
+          }
+        ]
+      when "recent_updates"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Show me recently updated pages in Notion"
+            }
+          }
+        ]
+      when "workspace_overview"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Give me an overview of the Notion workspace structure"
+            }
+          }
+        ]
+      else
+        []
+      end
+
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          description: prompt[:description],
+          messages: messages
+        }
+      }
     end
 
     def call_tool(tool_name, arguments)

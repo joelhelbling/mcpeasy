@@ -153,7 +153,7 @@ module Gmail
 
       # Extract email body
       body_data = extract_body(message.payload)
-      
+
       # If body is still corrupted, fall back to snippet
       if body_data[:text].empty? || body_data[:text].start_with?("[Encrypted") || !body_data[:text].valid_encoding?
         body_data[:text] = message.snippet || "[Unable to decode message body]"

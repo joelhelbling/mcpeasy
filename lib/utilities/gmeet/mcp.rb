@@ -10,6 +10,68 @@ module Gmeet
     def initialize
       # Defer Service initialization until actually needed
       @gmeet_tool = nil
+      @prompts = [
+        {
+          name: "upcoming_meetings",
+          description: "Check what Google Meet meetings are coming up soon",
+          arguments: [
+            {
+              name: "timeframe",
+              description: "Time period to check (e.g., 'today', 'next few hours', 'tomorrow')",
+              required: false
+            }
+          ]
+        },
+        {
+          name: "find_meeting",
+          description: "Find a specific Google Meet meeting",
+          arguments: [
+            {
+              name: "meeting_info",
+              description: "Meeting name, topic, or keywords to search for",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "get_meeting_link",
+          description: "Get the Google Meet link for a specific meeting",
+          arguments: [
+            {
+              name: "meeting_identifier",
+              description: "Meeting name, event ID, or keywords to identify the meeting",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "next_meeting",
+          description: "Show details about the next scheduled Google Meet meeting",
+          arguments: []
+        },
+        {
+          name: "daily_meetings",
+          description: "See all Google Meet meetings scheduled for a specific day",
+          arguments: [
+            {
+              name: "date",
+              description: "Date to check meetings for (e.g., 'today', 'tomorrow', '2024-01-15')",
+              required: false
+            }
+          ]
+        },
+        {
+          name: "team_meetings",
+          description: "Find team meetings or meetings with specific people",
+          arguments: [
+            {
+              name: "team_or_person",
+              description: "Team name, person's name, or keywords related to the meetings",
+              required: true
+            }
+          ]
+        }
+      ]
       @tools = {
         "test_connection" => {
           name: "test_connection",
@@ -183,6 +245,10 @@ module Gmeet
         tools_list_response(id, params)
       when "tools/call"
         tools_call_response(id, params)
+      when "prompts/list"
+        prompts_list_response(id, params)
+      when "prompts/get"
+        prompts_get_response(id, params)
       else
         {
           jsonrpc: "2.0",
@@ -203,7 +269,8 @@ module Gmeet
         result: {
           protocolVersion: "2024-11-05",
           capabilities: {
-            tools: {}
+            tools: {},
+            prompts: {}
           },
           serverInfo: {
             name: "gmeet-mcp-server",
@@ -270,6 +337,113 @@ module Gmeet
           }
         }
       end
+    end
+
+    def prompts_list_response(id, params)
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          prompts: @prompts
+        }
+      }
+    end
+
+    def prompts_get_response(id, params)
+      prompt_name = params["name"]
+      prompt = @prompts.find { |p| p[:name] == prompt_name }
+
+      unless prompt
+        return {
+          jsonrpc: "2.0",
+          id: id,
+          error: {
+            code: -32602,
+            message: "Unknown prompt",
+            data: "Prompt '#{prompt_name}' not found"
+          }
+        }
+      end
+
+      # Generate messages based on the prompt
+      messages = case prompt_name
+      when "upcoming_meetings"
+        timeframe = params["arguments"]&.dig("timeframe") || "next few hours"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Show me my upcoming Google Meet meetings for #{timeframe}"
+            }
+          }
+        ]
+      when "find_meeting"
+        meeting_info = params["arguments"]&.dig("meeting_info") || "team standup"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find Google Meet meetings related to: #{meeting_info}"
+            }
+          }
+        ]
+      when "get_meeting_link"
+        meeting_identifier = params["arguments"]&.dig("meeting_identifier") || "project review"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Get the Google Meet link for: #{meeting_identifier}"
+            }
+          }
+        ]
+      when "next_meeting"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "What's my next Google Meet meeting?"
+            }
+          }
+        ]
+      when "daily_meetings"
+        date = params["arguments"]&.dig("date") || "today"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Show me all Google Meet meetings for #{date}"
+            }
+          }
+        ]
+      when "team_meetings"
+        team_or_person = params["arguments"]&.dig("team_or_person") || "engineering team"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Find Google Meet meetings with #{team_or_person}"
+            }
+          }
+        ]
+      else
+        []
+      end
+
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          description: prompt[:description],
+          messages: messages
+        }
+      }
     end
 
     def call_tool(tool_name, arguments)

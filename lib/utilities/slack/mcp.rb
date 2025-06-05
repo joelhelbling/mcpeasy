@@ -10,6 +10,82 @@ module Slack
     def initialize
       # Defer SlackTool initialization until actually needed
       @slack_tool = nil
+      @prompts = [
+        {
+          name: "post_message",
+          description: "Send a message to a Slack channel",
+          arguments: [
+            {
+              name: "channel",
+              description: "Channel to post to (e.g., 'general', 'random', or '#team-updates')",
+              required: true
+            },
+            {
+              name: "message",
+              description: "Message text to send",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "post_announcement",
+          description: "Send an announcement or important message to a Slack channel",
+          arguments: [
+            {
+              name: "channel",
+              description: "Channel to post announcement to (e.g., 'general', 'announcements')",
+              required: true
+            },
+            {
+              name: "message",
+              description: "Announcement text to send",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "list_channels",
+          description: "See what Slack channels are available",
+          arguments: []
+        },
+        {
+          name: "reply_in_thread",
+          description: "Reply to a message in a Slack thread",
+          arguments: [
+            {
+              name: "channel",
+              description: "Channel where the original message is",
+              required: true
+            },
+            {
+              name: "thread_ts",
+              description: "Timestamp of the original message to reply to",
+              required: true
+            },
+            {
+              name: "reply",
+              description: "Reply message text",
+              required: true
+            }
+          ]
+        },
+        {
+          name: "team_update",
+          description: "Send a team status update or standup message",
+          arguments: [
+            {
+              name: "channel",
+              description: "Team channel to post update to",
+              required: true
+            },
+            {
+              name: "update",
+              description: "Status update or standup message",
+              required: true
+            }
+          ]
+        }
+      ]
       @tools = {
         "test_connection" => {
           name: "test_connection",
@@ -143,6 +219,10 @@ module Slack
         tools_list_response(id, params)
       when "tools/call"
         tools_call_response(id, params)
+      when "prompts/list"
+        prompts_list_response(id, params)
+      when "prompts/get"
+        prompts_get_response(id, params)
       else
         {
           jsonrpc: "2.0",
@@ -163,7 +243,8 @@ module Slack
         result: {
           protocolVersion: "2024-11-05",
           capabilities: {
-            tools: {}
+            tools: {},
+            prompts: {}
           },
           serverInfo: {
             name: "slack-mcp-server",
@@ -230,6 +311,107 @@ module Slack
           }
         }
       end
+    end
+
+    def prompts_list_response(id, params)
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          prompts: @prompts
+        }
+      }
+    end
+
+    def prompts_get_response(id, params)
+      prompt_name = params["name"]
+      prompt = @prompts.find { |p| p[:name] == prompt_name }
+
+      unless prompt
+        return {
+          jsonrpc: "2.0",
+          id: id,
+          error: {
+            code: -32602,
+            message: "Unknown prompt",
+            data: "Prompt '#{prompt_name}' not found"
+          }
+        }
+      end
+
+      # Generate messages based on the prompt
+      messages = case prompt_name
+      when "post_message"
+        channel = params["arguments"]&.dig("channel") || "general"
+        message = params["arguments"]&.dig("message") || "Hello team!"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Post a message to ##{channel}: #{message}"
+            }
+          }
+        ]
+      when "post_announcement"
+        channel = params["arguments"]&.dig("channel") || "general"
+        message = params["arguments"]&.dig("message") || "Important announcement"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Post an announcement to ##{channel}: #{message}"
+            }
+          }
+        ]
+      when "list_channels"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Show me what Slack channels are available"
+            }
+          }
+        ]
+      when "reply_in_thread"
+        channel = params["arguments"]&.dig("channel") || "general"
+        thread_ts = params["arguments"]&.dig("thread_ts") || "1234567890.123456"
+        reply = params["arguments"]&.dig("reply") || "Thanks for the update!"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Reply to thread #{thread_ts} in ##{channel}: #{reply}"
+            }
+          }
+        ]
+      when "team_update"
+        channel = params["arguments"]&.dig("channel") || "team-updates"
+        update = params["arguments"]&.dig("update") || "Daily standup update"
+        [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: "Post team update to ##{channel}: #{update}"
+            }
+          }
+        ]
+      else
+        []
+      end
+
+      {
+        jsonrpc: "2.0",
+        id: id,
+        result: {
+          description: prompt[:description],
+          messages: messages
+        }
+      }
     end
 
     def call_tool(tool_name, arguments)

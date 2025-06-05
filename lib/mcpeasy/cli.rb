@@ -5,14 +5,14 @@ require_relative "config"
 
 module Mcpeasy
   class GoogleCommands < Thor
-    desc "auth", "Authenticate with Google services (Calendar, Drive, Meet)"
+    desc "auth", "Authenticate with Google services (Calendar, Drive, Meet, Gmail)"
     def auth
       require_relative "../utilities/gcal/service"
       tool = Gcal::Service.new(skip_auth: true)
       result = tool.authenticate
       if result[:success]
         puts "✅ Successfully authenticated with Google services"
-        puts "   This enables access to Calendar, Drive, and Meet"
+        puts "   This enables access to Calendar, Drive, Meet, and Gmail"
       else
         puts "❌ Authentication failed: #{result[:error]}"
         exit 1

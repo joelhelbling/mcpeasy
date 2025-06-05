@@ -92,7 +92,14 @@ module Gmail
     end
 
     desc "read EMAIL_ID", "Read a specific email"
+    option :debug, type: :boolean, desc: "Show debug information"
+    option :raw, type: :boolean, desc: "Show raw message structure"
     def read(email_id)
+      if options[:raw]
+        email = tool.get_raw_message(email_id)
+        return
+      end
+      
       email = tool.get_email_content(email_id)
 
       puts "📧 Email Details:"
@@ -114,6 +121,17 @@ module Gmail
       end
 
       puts "\n📄 Body:"
+      if options[:debug] && email[:body]
+        puts "Debug: Body encoding: #{email[:body].encoding}"
+        puts "Debug: Body bytes (first 100): #{email[:body].bytes.first(100).inspect}"
+        puts "Debug: Is valid UTF-8? #{email[:body].valid_encoding?}"
+        puts "Debug: Snippet: #{email[:snippet]}" if email[:snippet]
+        if email[:debug_info]
+          puts "Debug: Content-Type: #{email[:debug_info][:content_type]}"
+          puts "Debug: Content-Encoding: #{email[:debug_info][:content_encoding]}"
+          puts "Debug: Content-Transfer-Encoding: #{email[:debug_info][:content_transfer_encoding]}"
+        end
+      end
       puts email[:body]
     rescue RuntimeError => e
       warn "❌ Failed to read email: #{e.message}"

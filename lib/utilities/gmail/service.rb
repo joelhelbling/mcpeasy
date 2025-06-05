@@ -104,14 +104,76 @@ module Gmail
       raise e
     end
 
+    def get_raw_message(email_id)
+      message = @service.get_user_message("me", email_id, format: "full")
+
+      puts "📧 Raw Message Structure:"
+      puts "Message ID: #{message.id}"
+      puts "Payload MIME Type: #{message.payload.mime_type}"
+
+      print_parts_recursive(message.payload)
+    end
+
+    def print_parts_recursive(payload, indent = 0)
+      prefix = "  " * indent
+      puts "#{prefix}MIME Type: #{payload.mime_type}"
+      puts "#{prefix}Has body data: #{!payload.body.nil? && !payload.body.data.nil?}"
+      if payload.body&.data
+        begin
+          decoded = decode_body_data(payload.body.data)
+          puts "#{prefix}Body preview (first 100 chars): #{decoded[0..100].inspect}"
+          puts "#{prefix}Body bytes (first 20): #{decoded.bytes.first(20).inspect}"
+        rescue
+          puts "#{prefix}Failed to decode body data"
+        end
+      end
+
+      if payload.headers
+        content_headers = payload.headers.select { |h| h.name.downcase.include?("content") }
+        content_headers.each do |header|
+          puts "#{prefix}Header: #{header.name} = #{header.value}"
+        end
+      end
+
+      if payload.parts
+        puts "#{prefix}Parts: #{payload.parts.size}"
+        payload.parts.each_with_index do |part, i|
+          puts "#{prefix}Part #{i + 1}:"
+          print_parts_recursive(part, indent + 1)
+        end
+      end
+    end
+
     def get_email_content(email_id)
-      message = @service.get_user_message("me", email_id)
+      # Try to get the message in 'metadata' format first to see if it helps
+      message = @service.get_user_message("me", email_id, format: "full")
 
       # Extract email metadata
       headers = extract_headers(message.payload)
 
       # Extract email body
       body_data = extract_body(message.payload)
+      
+      # If body is still corrupted, fall back to snippet
+      if body_data[:text].empty? || body_data[:text].start_with?("[Encrypted") || !body_data[:text].valid_encoding?
+        body_data[:text] = message.snippet || "[Unable to decode message body]"
+        body_data[:html] = ""
+      end
+
+      # Debug: Check for content encoding
+      content_encoding = headers["Content-Encoding"]
+      if content_encoding
+        require "zlib"
+        require "stringio"
+
+        if content_encoding.downcase == "gzip"
+          body_data[:text] = decompress_gzip(body_data[:text]) if body_data[:text] && !body_data[:text].empty?
+          body_data[:html] = decompress_gzip(body_data[:html]) if body_data[:html] && !body_data[:html].empty?
+        elsif content_encoding.downcase == "deflate"
+          body_data[:text] = Zlib::Inflate.inflate(body_data[:text]) if body_data[:text] && !body_data[:text].empty?
+          body_data[:html] = Zlib::Inflate.inflate(body_data[:html]) if body_data[:html] && !body_data[:html].empty?
+        end
+      end
 
       {
         id: message.id,
@@ -126,7 +188,12 @@ module Gmail
         body_html: body_data[:html],
         snippet: message.snippet,
         labels: message.label_ids || [],
-        attachments: extract_attachments(message.payload)
+        attachments: extract_attachments(message.payload),
+        debug_info: {
+          content_type: headers["Content-Type"],
+          content_encoding: headers["Content-Encoding"],
+          content_transfer_encoding: headers["Content-Transfer-Encoding"]
+        }
       }
     rescue Google::Apis::Error => e
       raise "Gmail API Error: #{e.message}"
@@ -434,14 +501,27 @@ module Gmail
     def extract_body(payload)
       body_data = {text: "", html: ""}
 
+      # Check if this is an S/MIME encrypted message
+      if payload.mime_type&.include?("pkcs7-mime") || payload.mime_type&.include?("pkcs7-signature")
+        body_data[:text] = "[S/MIME encrypted or signed message - decryption not supported]"
+        return body_data
+      end
+
       if payload.body&.data
         # Simple message body
-        decoded_body = Base64.urlsafe_decode64(payload.body.data)
+        decoded_body = decode_body_data(payload.body.data)
         if payload.mime_type == "text/html"
           body_data[:html] = decoded_body
           body_data[:text] = Html2Text.convert(decoded_body)
-        else
+        elsif payload.mime_type == "text/plain"
           body_data[:text] = decoded_body
+        else
+          # Unknown mime type with body data - might be encrypted
+          body_data[:text] = if decoded_body.bytes.first(2) == [0x30, 0x82] || decoded_body.bytes.first == 0x30
+            "[Encrypted or signed message - ASN.1/DER format detected]"
+          else
+            decoded_body
+          end
         end
       elsif payload.parts
         # Multipart message
@@ -453,20 +533,163 @@ module Gmail
 
     def extract_body_from_parts(parts, body_data)
       parts.each do |part|
+        # Check for S/MIME parts
+        if part.mime_type&.include?("pkcs7")
+          next # Skip S/MIME parts
+        end
+
+        # Check for content-transfer-encoding header in part headers
+        part_headers = {}
+        (part.headers || []).each do |header|
+          part_headers[header.name] = header.value
+        end
+
         if part.mime_type == "text/plain" && part.body&.data
-          body_data[:text] += Base64.urlsafe_decode64(part.body.data)
+          decoded_content = decode_body_data(part.body.data)
+          # Check if we need additional decoding
+          decoded_content = handle_content_encoding(decoded_content, part_headers)
+          # Check if it's actually encrypted content
+          if decoded_content.bytes.first(2) == [0x30, 0x82] || decoded_content.bytes.first == 0x30
+            body_data[:text] = "[Encrypted content detected in text/plain part]" if body_data[:text].empty?
+          else
+            body_data[:text] += decoded_content
+          end
         elsif part.mime_type == "text/html" && part.body&.data
-          html_content = Base64.urlsafe_decode64(part.body.data)
+          html_content = decode_body_data(part.body.data)
+          # Check if we need additional decoding
+          html_content = handle_content_encoding(html_content, part_headers)
           body_data[:html] += html_content
           # If we don't have plain text yet, convert from HTML
-          if body_data[:text].empty?
+          if body_data[:text].empty? || body_data[:text].start_with?("[Encrypted")
             body_data[:text] = Html2Text.convert(html_content)
           end
+        elsif part.mime_type == "multipart/alternative" && part.parts
+          # For multipart/alternative, prefer text/plain but fall back to text/html
+          text_part = part.parts.find { |p| p.mime_type == "text/plain" }
+          html_part = part.parts.find { |p| p.mime_type == "text/html" }
+
+          if text_part
+            extract_body_from_parts([text_part], body_data)
+          elsif html_part
+            extract_body_from_parts([html_part], body_data)
+          else
+            extract_body_from_parts(part.parts, body_data)
+          end
         elsif part.parts
-          # Nested multipart
+          # Other nested multipart types
           extract_body_from_parts(part.parts, body_data)
         end
       end
+    end
+
+    def handle_content_encoding(data, headers)
+      return data if data.nil? || data.empty?
+
+      # Check for content-transfer-encoding first (this affects the base64 decoded data)
+      content_transfer_encoding = headers["Content-Transfer-Encoding"]
+      if content_transfer_encoding
+        begin
+          case content_transfer_encoding.downcase
+          when "quoted-printable"
+            # Decode quoted-printable encoding
+            data = data.unpack1("M*")
+          when "base64"
+            # Additional base64 decoding (though this should already be handled)
+            data = Base64.decode64(data)
+          end
+        rescue => e
+          # If decoding fails, continue with original data
+          puts "Warning: Failed to decode content-transfer-encoding #{content_transfer_encoding}: #{e.message}" if $DEBUG
+        end
+      end
+
+      # Check for content encoding (compression)
+      content_encoding = headers["Content-Encoding"]
+      if content_encoding
+        require "zlib"
+        require "stringio"
+
+        begin
+          case content_encoding.downcase
+          when "gzip"
+            data = decompress_gzip(data)
+          when "deflate"
+            data = Zlib::Inflate.inflate(data)
+          end
+        rescue
+          # If decompression fails, continue with original data
+        end
+      end
+
+      # Check character encoding - Gmail often uses UTF-8 but sometimes other encodings
+      charset = nil
+      if headers["Content-Type"]
+        charset_match = headers["Content-Type"].match(/charset=["']?([^"';\s]+)/i)
+        charset = charset_match[1] if charset_match
+      end
+
+      if charset && charset.downcase != "utf-8"
+        begin
+          # Force encoding to the specified charset, then convert to UTF-8
+          data = data.force_encoding(charset).encode("UTF-8", invalid: :replace, undef: :replace)
+        rescue
+          # If encoding conversion fails, try to force UTF-8
+          data = data.force_encoding("UTF-8")
+        end
+      elsif data.encoding != Encoding::UTF_8
+        # Ensure UTF-8 encoding
+        data = data.force_encoding("UTF-8")
+      end
+
+      data
+    end
+
+    def decompress_gzip(data)
+      StringIO.open(data) do |io|
+        gz = Zlib::GzipReader.new(io)
+        gz.read
+      end
+    rescue
+      # If decompression fails, return original data
+      data
+    end
+
+    def decode_body_data(data)
+      # Gmail sometimes returns base64 data without proper padding
+      # Add padding if necessary
+      padded_data = data
+      mod = data.length % 4
+      if mod > 0
+        padded_data += "=" * (4 - mod)
+      end
+      decoded = Base64.urlsafe_decode64(padded_data)
+
+      # Check if the decoded data is gzip compressed
+      # Gzip magic number is 1f 8b
+      if decoded.bytes.first(2) == [0x1f, 0x8b]
+        require "zlib"
+        require "stringio"
+        decoded = decompress_gzip(decoded)
+      end
+
+      decoded
+    rescue ArgumentError
+      # If it still fails, try replacing URL-safe characters and decode as standard base64
+      standard_data = data.tr("-_", "+/")
+      mod = standard_data.length % 4
+      if mod > 0
+        standard_data += "=" * (4 - mod)
+      end
+      decoded = Base64.decode64(standard_data)
+
+      # Check if the decoded data is gzip compressed
+      if decoded.bytes.first(2) == [0x1f, 0x8b]
+        require "zlib"
+        require "stringio"
+        decoded = decompress_gzip(decoded)
+      end
+
+      decoded
     end
 
     def extract_attachments(payload)

@@ -5,18 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2025-06-07
 
 ### Added
-- Gmail MCP server implementation (work in progress)
-- Enhanced MCP server prompts for better AI assistant integration
-
-### Changed
-- Improved authentication scope handling for Google services
-- Enhanced git grep functionality support
-
-### Fixed
-- Email body handling issues with snippet workaround implementation
+- Gmail MCP server integration with comprehensive email support
+  - List and search emails with various filters
+  - Read email content including headers and body
+  - Send new emails and reply to existing ones
+  - Manage email labels, mark as read/unread
+  - Archive and trash emails
+  - Full OAuth2 authentication flow integration
 
 ## [0.2.0] - 2025-06-03
 
